@@ -19,4 +19,16 @@ internal static partial class ExecutorLogMessages
         Level = LogLevel.Information,
         Message = "RabbitMQ topology ensured. Exchange={Exchange}. ExecutorQueue={ExecutorQueue}. ResultsQueue={ResultsQueue}")]
     public static partial void TopologyReady(ILogger logger, string exchange, string executorQueue, string resultsQueue);
+
+    [LoggerMessage(
+        EventId = 1003,
+        Level = LogLevel.Information,
+        Message = "Kalshi API call {Operation} returned statusCode={StatusCode} in {DurationMs} ms.")]
+    public static partial void KalshiApiCallSucceeded(ILogger logger, string operation, int statusCode, double durationMs);
+
+    [LoggerMessage(
+        EventId = 1004,
+        Level = LogLevel.Error,
+        Message = "Kalshi API call {Operation} failed in {DurationMs} ms. Error={ErrorMessage}")]
+    public static partial void KalshiApiCallFailed(ILogger logger, string operation, double durationMs, string errorMessage);
 }
