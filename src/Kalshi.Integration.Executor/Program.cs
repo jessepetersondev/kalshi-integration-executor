@@ -40,6 +40,7 @@ var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.Section
 
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
+builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
 builder.Services.AddSingleton<IResultEventPublisher, InMemoryResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, InMemoryConsumedEventStore>();
 builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
@@ -60,7 +61,7 @@ builder.Services.AddHttpClient<IKalshiExecutionClient, KalshiExecutionClient>((s
         resilienceOptions.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(Math.Max(kalshiApiOptions.TimeoutSeconds * Math.Max(1, kalshiApiOptions.RetryAttempts + 1), kalshiApiOptions.TimeoutSeconds));
     });
 
-builder.Services.AddHostedService<ExecutorWorker>();
+builder.Services.AddHostedService<RabbitMqEventConsumer>();
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
