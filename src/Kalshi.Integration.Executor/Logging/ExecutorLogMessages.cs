@@ -11,7 +11,7 @@ internal static partial class ExecutorLogMessages
     [LoggerMessage(
         EventId = 1001,
         Level = LogLevel.Information,
-        Message = "Kalshi Integration Executor worker started. RabbitMQ consumption and Kalshi execution handlers are not wired yet.")]
+        Message = "Kalshi Integration Executor worker started. RabbitMQ consumer, routing, and execution handlers are active.")]
     public static partial void WorkerStarted(ILogger logger);
 
     [LoggerMessage(

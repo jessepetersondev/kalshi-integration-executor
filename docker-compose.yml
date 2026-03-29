@@ -35,8 +35,8 @@ services:
       Integrations__KalshiApi__BaseUrl: https://api.elections.kalshi.com
       Integrations__KalshiApi__TimeoutSeconds: "10"
       Integrations__KalshiApi__RetryAttempts: "2"
-      Integrations__KalshiApi__ApiKey: local-dev-key
-      Integrations__KalshiApi__ApiSecret: local-dev-secret
+      Integrations__KalshiApi__AccessKeyId: ${KALSHI_ACCESS_KEY_ID}
+      Integrations__KalshiApi__PrivateKeyPath: kalshi.key
       FailureHandling__MaxRetryAttempts: "3"
       FailureHandling__BaseDelayMilliseconds: "250"
     depends_on:

@@ -48,6 +48,12 @@ It brings up:
 - the executor worker
 
 ### Start locally
+Before running compose, export your Kalshi access key ID in the shell:
+```bash
+export KALSHI_ACCESS_KEY_ID="your-access-key-id"
+```
+
+Then start locally:
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
 docker compose up --build
