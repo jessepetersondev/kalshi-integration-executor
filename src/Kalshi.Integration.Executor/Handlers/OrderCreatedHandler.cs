@@ -1,3 +1,4 @@
+using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
@@ -9,15 +10,18 @@ public sealed class OrderCreatedHandler
     private readonly IKalshiExecutionClient _kalshiExecutionClient;
     private readonly IResultEventPublisher _resultEventPublisher;
     private readonly IConsumedEventStore _consumedEventStore;
+    private readonly ExecutionReliabilityPolicy _executionReliabilityPolicy;
 
     public OrderCreatedHandler(
         IKalshiExecutionClient kalshiExecutionClient,
         IResultEventPublisher resultEventPublisher,
-        IConsumedEventStore consumedEventStore)
+        IConsumedEventStore consumedEventStore,
+        ExecutionReliabilityPolicy executionReliabilityPolicy)
     {
         _kalshiExecutionClient = kalshiExecutionClient;
         _resultEventPublisher = resultEventPublisher;
         _consumedEventStore = consumedEventStore;
+        _executionReliabilityPolicy = executionReliabilityPolicy;
     }
 
     public async Task HandleAsync(ApplicationEventEnvelope envelope, CancellationToken cancellationToken = default)
@@ -35,45 +39,56 @@ public sealed class OrderCreatedHandler
             LimitPrice: envelope.Attributes.TryGetValue("limitPrice", out var limitPrice) && decimal.TryParse(limitPrice, out var parsedLimitPrice) ? parsedLimitPrice : 0m,
             ClientOrderId: envelope.ResourceId ?? envelope.Id.ToString());
 
-        try
-        {
-            var response = await _kalshiExecutionClient.PlaceOrderAsync(request, cancellationToken);
-            var successEvent = new ApplicationEventEnvelope(
-                Guid.NewGuid(),
-                "executor",
-                "order.execution_succeeded",
-                envelope.ResourceId,
-                envelope.CorrelationId,
-                envelope.IdempotencyKey,
-                new Dictionary<string, string?>
+        await _executionReliabilityPolicy.ExecuteAsync(
+            envelope,
+            deadLetterQueue: "kalshi.integration.executor.dlq",
+            async token =>
+            {
+                try
                 {
-                    ["externalOrderId"] = response.ExternalOrderId,
-                    ["status"] = response.Status,
-                    ["sourceEvent"] = envelope.Name,
-                },
-                DateTimeOffset.UtcNow);
+                    var response = await _kalshiExecutionClient.PlaceOrderAsync(request, token);
+                    var successEvent = new ApplicationEventEnvelope(
+                        Guid.NewGuid(),
+                        "executor",
+                        "order.execution_succeeded",
+                        envelope.ResourceId,
+                        envelope.CorrelationId,
+                        envelope.IdempotencyKey,
+                        new Dictionary<string, string?>
+                        {
+                            ["externalOrderId"] = response.ExternalOrderId,
+                            ["status"] = response.Status,
+                            ["sourceEvent"] = envelope.Name,
+                        },
+                        DateTimeOffset.UtcNow);
 
-            await _resultEventPublisher.PublishAsync(successEvent, cancellationToken);
-            await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            var failureEvent = new ApplicationEventEnvelope(
-                Guid.NewGuid(),
-                "executor",
-                "order.execution_failed",
-                envelope.ResourceId,
-                envelope.CorrelationId,
-                envelope.IdempotencyKey,
-                new Dictionary<string, string?>
+                    await _resultEventPublisher.PublishAsync(successEvent, token);
+                    await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, token);
+                }
+                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or TimeoutException)
                 {
-                    ["errorType"] = exception.GetType().Name,
-                    ["errorMessage"] = exception.Message,
-                    ["sourceEvent"] = envelope.Name,
-                },
-                DateTimeOffset.UtcNow);
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    var failureEvent = new ApplicationEventEnvelope(
+                        Guid.NewGuid(),
+                        "executor",
+                        "order.execution_failed",
+                        envelope.ResourceId,
+                        envelope.CorrelationId,
+                        envelope.IdempotencyKey,
+                        new Dictionary<string, string?>
+                        {
+                            ["errorType"] = exception.GetType().Name,
+                            ["errorMessage"] = exception.Message,
+                            ["sourceEvent"] = envelope.Name,
+                        },
+                        DateTimeOffset.UtcNow);
 
-            await _resultEventPublisher.PublishAsync(failureEvent, cancellationToken);
-        }
+                    await _resultEventPublisher.PublishAsync(failureEvent, token);
+                }
+            },
+            cancellationToken);
     }
 }

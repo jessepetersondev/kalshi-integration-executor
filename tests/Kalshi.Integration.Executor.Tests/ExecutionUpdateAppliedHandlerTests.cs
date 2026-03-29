@@ -1,7 +1,10 @@
+using Kalshi.Integration.Executor.Configuration;
+using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -12,14 +15,17 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient("filled", null);
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
         var published = Assert.Single(publisher.PublishedEvents);
         Assert.Equal("execution-update.reconciled", published.Name);
         Assert.Equal("filled", published.Attributes["status"]);
+        Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
     [Fact]
@@ -27,8 +33,10 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("status failed"));
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
@@ -42,8 +50,10 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient("filled", null);
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
 
         var envelope = CreateEnvelope();
 
@@ -68,6 +78,17 @@ public sealed class ExecutionUpdateAppliedHandlerTests
                 ["externalOrderId"] = "ext-123",
             },
             DateTimeOffset.UtcNow);
+    }
+
+    private sealed class RecordingDeadLetterPublisher : IDeadLetterEventPublisher
+    {
+        public List<ApplicationEventEnvelope> PublishedEvents { get; } = [];
+
+        public Task PublishAsync(ApplicationEventEnvelope applicationEvent, string deadLetterQueue, CancellationToken cancellationToken = default)
+        {
+            PublishedEvents.Add(applicationEvent);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class StubKalshiExecutionClient : IKalshiExecutionClient

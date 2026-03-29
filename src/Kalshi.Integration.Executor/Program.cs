@@ -1,5 +1,6 @@
 using Kalshi.Integration.Executor;
 using Kalshi.Integration.Executor.Configuration;
+using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Logging;
@@ -29,12 +30,20 @@ builder.Services
     .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _), $"{KalshiApiOptions.SectionName}:BaseUrl must be an absolute URL.")
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<FailureHandlingOptions>()
+    .Bind(builder.Configuration.GetSection(FailureHandlingOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.SectionName).Get<KalshiApiOptions>() ?? new KalshiApiOptions();
 
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IResultEventPublisher, InMemoryResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, InMemoryConsumedEventStore>();
+builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
+builder.Services.AddSingleton<ExecutionReliabilityPolicy>();
 builder.Services.AddTransient<OrderCreatedHandler>();
 builder.Services.AddTransient<TradeIntentCreatedHandler>();
 builder.Services.AddTransient<ExecutionUpdateAppliedHandler>();

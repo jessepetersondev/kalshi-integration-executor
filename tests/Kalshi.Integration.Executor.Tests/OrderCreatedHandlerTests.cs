@@ -1,7 +1,10 @@
+using Kalshi.Integration.Executor.Configuration;
+using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -12,10 +15,12 @@ public sealed class OrderCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, store);
+        var handler = new OrderCreatedHandler(client, publisher, store, policy);
 
         var envelope = CreateEnvelope();
 
@@ -26,6 +31,7 @@ public sealed class OrderCreatedHandlerTests
         Assert.Equal("corr-1", published.CorrelationId);
         Assert.Equal("idem-1", published.IdempotencyKey);
         Assert.Equal("ext-123", published.Attributes["externalOrderId"]);
+        Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
     [Fact]
@@ -33,8 +39,10 @@ public sealed class OrderCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("boom"));
-        var handler = new OrderCreatedHandler(client, publisher, store);
+        var handler = new OrderCreatedHandler(client, publisher, store, policy);
 
         var envelope = CreateEnvelope();
 
@@ -51,10 +59,12 @@ public sealed class OrderCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, store);
+        var handler = new OrderCreatedHandler(client, publisher, store, policy);
 
         var envelope = CreateEnvelope();
 
@@ -82,6 +92,17 @@ public sealed class OrderCreatedHandlerTests
                 ["limitPrice"] = "0.42",
             },
             DateTimeOffset.UtcNow);
+    }
+
+    private sealed class RecordingDeadLetterPublisher : IDeadLetterEventPublisher
+    {
+        public List<ApplicationEventEnvelope> PublishedEvents { get; } = [];
+
+        public Task PublishAsync(ApplicationEventEnvelope applicationEvent, string deadLetterQueue, CancellationToken cancellationToken = default)
+        {
+            PublishedEvents.Add(applicationEvent);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class StubKalshiExecutionClient : IKalshiExecutionClient

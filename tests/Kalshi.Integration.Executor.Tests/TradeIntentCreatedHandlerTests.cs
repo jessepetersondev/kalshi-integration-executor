@@ -1,7 +1,10 @@
+using Kalshi.Integration.Executor.Configuration;
+using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -12,8 +15,10 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
-        var handler = new TradeIntentCreatedHandler(client, publisher, store);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
@@ -21,6 +26,7 @@ public sealed class TradeIntentCreatedHandlerTests
         Assert.Equal("trade-intent.executed", published.Name);
         Assert.Equal("corr-1", published.CorrelationId);
         Assert.Contains("KXBTC", published.Attributes["market"], StringComparison.Ordinal);
+        Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
     [Fact]
@@ -28,8 +34,10 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, null, new InvalidOperationException("lookup failed"));
-        var handler = new TradeIntentCreatedHandler(client, publisher, store);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
@@ -43,8 +51,10 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
-        var handler = new TradeIntentCreatedHandler(client, publisher, store);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 
         var envelope = CreateEnvelope();
 
@@ -69,6 +79,17 @@ public sealed class TradeIntentCreatedHandlerTests
                 ["ticker"] = "KXBTC",
             },
             DateTimeOffset.UtcNow);
+    }
+
+    private sealed class RecordingDeadLetterPublisher : IDeadLetterEventPublisher
+    {
+        public List<ApplicationEventEnvelope> PublishedEvents { get; } = [];
+
+        public Task PublishAsync(ApplicationEventEnvelope applicationEvent, string deadLetterQueue, CancellationToken cancellationToken = default)
+        {
+            PublishedEvents.Add(applicationEvent);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class StubKalshiExecutionClient : IKalshiExecutionClient

@@ -1,0 +1,48 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - kalshi_executor_rabbitmq_data:/var/lib/rabbitmq
+
+  executor:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /workspace
+    command: >-
+      bash -lc "dotnet run --project src/Kalshi.Integration.Executor/Kalshi.Integration.Executor.csproj --configuration Release"
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__VirtualHost: /
+      RabbitMq__UserName: guest
+      RabbitMq__Password: guest
+      RabbitMq__Exchange: kalshi.integration.events
+      RabbitMq__ExchangeType: topic
+      RabbitMq__ExecutorQueue: kalshi.integration.executor
+      RabbitMq__ExecutorResultsQueue: kalshi.integration.executor.results
+      RabbitMq__ExecutorDeadLetterQueue: kalshi.integration.executor.dlq
+      RabbitMq__ExecutorResultsDeadLetterQueue: kalshi.integration.executor.results.dlq
+      RabbitMq__RoutingKeyBinding: kalshi.integration.#
+      RabbitMq__ResultsRoutingKeyBinding: kalshi.integration.results.#
+      RabbitMq__ClientProvidedName: kalshi-integration-executor
+      Integrations__KalshiApi__BaseUrl: https://api.elections.kalshi.com
+      Integrations__KalshiApi__TimeoutSeconds: "10"
+      Integrations__KalshiApi__RetryAttempts: "2"
+      Integrations__KalshiApi__ApiKey: local-dev-key
+      Integrations__KalshiApi__ApiSecret: local-dev-secret
+      FailureHandling__MaxRetryAttempts: "3"
+      FailureHandling__BaseDelayMilliseconds: "250"
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./:/workspace
+
+volumes:
+  kalshi_executor_rabbitmq_data:
