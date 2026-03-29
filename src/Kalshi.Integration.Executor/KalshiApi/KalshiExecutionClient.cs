@@ -12,23 +12,46 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
 
     private readonly HttpClient _httpClient;
     private readonly KalshiApiOptions _options;
+    private readonly KalshiRequestSigner _requestSigner;
     private readonly ILogger<KalshiExecutionClient> _logger;
 
     public KalshiExecutionClient(HttpClient httpClient, IOptions<KalshiApiOptions> options, ILogger<KalshiExecutionClient> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        _requestSigner = new KalshiRequestSigner(_options);
         _logger = logger;
     }
 
     public async Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Post, "/trade-api/v2/orders")
+        var apiRequest = new KalshiCreateOrderApiRequest
         {
-            Content = JsonContent.Create(request, options: SerializerOptions),
+            Ticker = request.MarketTicker,
+            ClientOrderId = request.ClientOrderId,
+            Side = request.Side,
+            Action = request.Action,
+            Count = request.Quantity,
+            Type = "limit",
+            TimeInForce = _options.TimeInForce,
+            PostOnly = _options.PostOnly,
+            CancelOrderOnPause = _options.CancelOrderOnPause,
+            Subaccount = _options.Subaccount,
+            ReduceOnly = request.ReduceOnly,
+            YesPriceDollars = request.Side.Equals("yes", StringComparison.OrdinalIgnoreCase)
+                ? request.LimitPrice.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture)
+                : null,
+            NoPriceDollars = request.Side.Equals("no", StringComparison.OrdinalIgnoreCase)
+                ? request.LimitPrice.ToString("0.0000", System.Globalization.CultureInfo.InvariantCulture)
+                : null,
         };
 
-        ApplyAuthenticationHeaders(message);
+        using var message = new HttpRequestMessage(HttpMethod.Post, "/trade-api/v2/portfolio/orders")
+        {
+            Content = JsonContent.Create(apiRequest, options: SerializerOptions),
+        };
+
+        ApplyAuthenticationHeaders(message, "/trade-api/v2/portfolio/orders");
         using var response = await SendAsync(message, "orders.place", cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -38,8 +61,9 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
 
     public async Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Post, $"/trade-api/v2/orders/{externalOrderId}/cancel");
-        ApplyAuthenticationHeaders(message);
+        var path = $"/trade-api/v2/portfolio/orders/{externalOrderId}";
+        using var message = new HttpRequestMessage(HttpMethod.Delete, path);
+        ApplyAuthenticationHeaders(message, path);
         using var response = await SendAsync(message, "orders.cancel", cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -48,8 +72,9 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
 
     public async Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Get, $"/trade-api/v2/orders/{externalOrderId}");
-        ApplyAuthenticationHeaders(message);
+        var path = $"/trade-api/v2/portfolio/orders/{externalOrderId}";
+        using var message = new HttpRequestMessage(HttpMethod.Get, path);
+        ApplyAuthenticationHeaders(message, path);
         using var response = await SendAsync(message, "orders.get", cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -58,18 +83,21 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
 
     public async Task<string> GetMarketAsync(string marketTicker, CancellationToken cancellationToken = default)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Get, $"/trade-api/v2/markets/{marketTicker}");
-        ApplyAuthenticationHeaders(message);
+        var path = $"/trade-api/v2/markets/{marketTicker}";
+        using var message = new HttpRequestMessage(HttpMethod.Get, path);
+        ApplyAuthenticationHeaders(message, path);
         using var response = await SendAsync(message, "markets.get", cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
         return body;
     }
 
-    private void ApplyAuthenticationHeaders(HttpRequestMessage message)
+    private void ApplyAuthenticationHeaders(HttpRequestMessage message, string path)
     {
-        message.Headers.TryAddWithoutValidation("KALSHI-API-KEY", _options.ApiKey);
-        message.Headers.TryAddWithoutValidation("KALSHI-API-SECRET", _options.ApiSecret);
+        var (timestamp, signature) = _requestSigner.Sign(message.Method, path);
+        message.Headers.TryAddWithoutValidation("KALSHI-ACCESS-KEY", _options.AccessKeyId);
+        message.Headers.TryAddWithoutValidation("KALSHI-ACCESS-SIGNATURE", signature);
+        message.Headers.TryAddWithoutValidation("KALSHI-ACCESS-TIMESTAMP", timestamp);
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, string operation, CancellationToken cancellationToken)

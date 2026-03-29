@@ -72,7 +72,27 @@ docker compose up --build
 3. Publish an application event from the publisher app.
 4. Verify the exchange and queues in RabbitMQ management UI.
 5. Verify executor startup logs show topology bootstrap.
-6. For failure-path validation, simulate transient Kalshi API failure and verify dead-letter publication to `kalshi.integration.executor.dlq`.
+6. For failure-path validation, inspect `kalshi.integration.executor.dlq`.
+7. For success-path validation, inspect `kalshi.integration.executor.results`.
+
+### RabbitMQ UI verification for successful runs
+Open the RabbitMQ management UI:
+- URL: `http://localhost:15673`
+- username: `guest`
+- password: `guest`
+
+Navigate to **Queues and Streams** and inspect:
+- `kalshi.integration.executor` → inbound trading work queue
+- `kalshi.integration.executor.results` → successful result events
+- `kalshi.integration.executor.dlq` → failed/dead-lettered events
+
+For a successful end-to-end run you should see messages such as:
+- `trade-intent.executed`
+- `order.execution_succeeded`
+
+The results queue messages are published with routing keys like:
+- `kalshi.integration.results.trade_intent_executed`
+- `kalshi.integration.results.order_execution_succeeded`
 
 ### Validation commands
 ```bash

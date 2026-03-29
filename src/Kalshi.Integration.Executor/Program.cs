@@ -26,8 +26,22 @@ builder.Services
 builder.Services
     .AddOptions<KalshiApiOptions>()
     .Bind(builder.Configuration.GetSection(KalshiApiOptions.SectionName))
+    .PostConfigure(options =>
+    {
+        if (string.IsNullOrWhiteSpace(options.PrivateKeyPem) && !string.IsNullOrWhiteSpace(options.PrivateKeyPath))
+        {
+            var fullPath = Path.IsPathRooted(options.PrivateKeyPath)
+                ? options.PrivateKeyPath
+                : Path.Combine(builder.Environment.ContentRootPath, options.PrivateKeyPath);
+            if (File.Exists(fullPath))
+            {
+                options.PrivateKeyPem = File.ReadAllText(fullPath);
+            }
+        }
+    })
     .ValidateDataAnnotations()
     .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _), $"{KalshiApiOptions.SectionName}:BaseUrl must be an absolute URL.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.PrivateKeyPem), $"{KalshiApiOptions.SectionName}:PrivateKeyPem or readable PrivateKeyPath must be configured.")
     .ValidateOnStart();
 
 builder.Services
@@ -41,7 +55,7 @@ var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.Section
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
-builder.Services.AddSingleton<IResultEventPublisher, InMemoryResultEventPublisher>();
+builder.Services.AddSingleton<IResultEventPublisher, RabbitMqResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, InMemoryConsumedEventStore>();
 builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
 builder.Services.AddSingleton<ExecutionReliabilityPolicy>();

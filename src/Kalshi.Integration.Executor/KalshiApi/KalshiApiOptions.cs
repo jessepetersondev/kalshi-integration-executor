@@ -19,8 +19,19 @@ public sealed class KalshiApiOptions
     public int RetryAttempts { get; set; } = 2;
 
     [Required]
-    public string ApiKey { get; set; } = "local-dev-key";
+    public string AccessKeyId { get; set; } = string.Empty;
 
     [Required]
-    public string ApiSecret { get; set; } = "local-dev-secret";
+    public string PrivateKeyPath { get; set; } = "kalshi.key";
+
+    public string PrivateKeyPem { get; set; } = string.Empty;
+
+    public int Subaccount { get; set; }
+
+    [Required]
+    public string TimeInForce { get; set; } = "immediate_or_cancel";
+
+    public bool PostOnly { get; set; }
+
+    public bool CancelOrderOnPause { get; set; } = true;
 }

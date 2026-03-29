@@ -29,7 +29,7 @@ services:
       RabbitMq__ExecutorResultsQueue: kalshi.integration.executor.results
       RabbitMq__ExecutorDeadLetterQueue: kalshi.integration.executor.dlq
       RabbitMq__ExecutorResultsDeadLetterQueue: kalshi.integration.executor.results.dlq
-      RabbitMq__RoutingKeyBinding: kalshi.integration.#
+      RabbitMq__RoutingKeyBinding: kalshi.integration.trading.#
       RabbitMq__ResultsRoutingKeyBinding: kalshi.integration.results.#
       RabbitMq__ClientProvidedName: kalshi-integration-executor
       Integrations__KalshiApi__BaseUrl: https://api.elections.kalshi.com

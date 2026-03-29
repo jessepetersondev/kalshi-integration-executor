@@ -40,7 +40,7 @@ public sealed class RabbitMqOptions
     public string ExecutorResultsDeadLetterQueue { get; set; } = "kalshi.integration.executor.results.dlq";
 
     [Required]
-    public string RoutingKeyBinding { get; set; } = "kalshi.integration.#";
+    public string RoutingKeyBinding { get; set; } = "kalshi.integration.trading.#";
 
     [Required]
     public string ResultsRoutingKeyBinding { get; set; } = "kalshi.integration.results.#";

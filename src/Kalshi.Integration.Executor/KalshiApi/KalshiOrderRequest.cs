@@ -5,4 +5,6 @@ public sealed record KalshiOrderRequest(
     string Side,
     int Quantity,
     decimal LimitPrice,
-    string ClientOrderId);
+    string ClientOrderId,
+    string Action = "buy",
+    bool ReduceOnly = false);

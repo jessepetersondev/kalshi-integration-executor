@@ -58,6 +58,15 @@ public sealed class RabbitMqTopologyBootstrapper
                 ["x-dead-letter-routing-key"] = _options.ExecutorResultsDeadLetterQueue,
             });
 
+        try
+        {
+            channel.QueueUnbind(_options.ExecutorQueue, _options.Exchange, "kalshi.integration.#", arguments: null);
+        }
+        catch
+        {
+            // Ignore if the legacy binding is absent.
+        }
+
         channel.QueueBind(_options.ExecutorQueue, _options.Exchange, _options.RoutingKeyBinding);
         channel.QueueBind(_options.ExecutorResultsQueue, _options.Exchange, _options.ResultsRoutingKeyBinding);
 
