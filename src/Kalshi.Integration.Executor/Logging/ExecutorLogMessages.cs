@@ -1,0 +1,16 @@
+namespace Kalshi.Integration.Executor.Logging;
+
+internal static partial class ExecutorLogMessages
+{
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Information,
+        Message = "Starting {ServiceName}. Mode={Mode}. Environment={EnvironmentName}")]
+    public static partial void Startup(ILogger logger, string serviceName, string mode, string environmentName);
+
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Information,
+        Message = "Kalshi Integration Executor worker started. RabbitMQ consumption and Kalshi execution handlers are not wired yet.")]
+    public static partial void WorkerStarted(ILogger logger);
+}
