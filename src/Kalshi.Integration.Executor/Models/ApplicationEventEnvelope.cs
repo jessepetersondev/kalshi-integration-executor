@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 
+
 namespace Kalshi.Integration.Executor.Messaging;
 
 public sealed record ApplicationEventEnvelope(

@@ -1,7 +1,8 @@
+using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Logging;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+
 
 namespace Kalshi.Integration.Executor.Messaging;
 

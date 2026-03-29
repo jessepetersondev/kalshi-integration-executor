@@ -1,10 +1,11 @@
 using System.Text;
+using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Logging;
-using Kalshi.Integration.Executor.Routing;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Kalshi.Integration.Executor.Routing;
+
 
 namespace Kalshi.Integration.Executor.Messaging;
 

@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Kalshi.Integration.Executor.Logging;
 using Microsoft.Extensions.Options;
+using Kalshi.Integration.Executor.Logging;
+
 
 namespace Kalshi.Integration.Executor.KalshiApi;
 

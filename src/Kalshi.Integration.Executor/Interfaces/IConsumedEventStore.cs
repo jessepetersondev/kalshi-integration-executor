@@ -1,3 +1,4 @@
+
 namespace Kalshi.Integration.Executor.Persistence;
 
 public interface IConsumedEventStore

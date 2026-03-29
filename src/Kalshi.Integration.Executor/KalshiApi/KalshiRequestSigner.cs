@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
+
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 public sealed class KalshiRequestSigner

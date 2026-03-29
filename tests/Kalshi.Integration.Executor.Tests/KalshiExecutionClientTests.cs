@@ -1,9 +1,11 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Kalshi.Integration.Executor.KalshiApi;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Kalshi.Integration.Executor.KalshiApi;
+
+
 
 namespace Kalshi.Integration.Executor.Tests;
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 
+
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 public static class KalshiOrderResponseParser

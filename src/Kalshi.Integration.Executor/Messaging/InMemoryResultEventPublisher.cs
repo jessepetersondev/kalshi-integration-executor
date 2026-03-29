@@ -1,3 +1,4 @@
+
 namespace Kalshi.Integration.Executor.Messaging;
 
 public sealed class InMemoryResultEventPublisher : IResultEventPublisher

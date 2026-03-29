@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
+
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 public sealed class KalshiApiOptions

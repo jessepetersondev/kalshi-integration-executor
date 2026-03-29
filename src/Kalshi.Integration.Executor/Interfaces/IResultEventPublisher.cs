@@ -1,3 +1,4 @@
+
 namespace Kalshi.Integration.Executor.Messaging;
 
 public interface IResultEventPublisher

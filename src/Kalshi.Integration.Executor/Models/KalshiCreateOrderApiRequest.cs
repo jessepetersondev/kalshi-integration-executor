@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 
+
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 public sealed class KalshiCreateOrderApiRequest

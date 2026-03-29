@@ -3,6 +3,7 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
+
 namespace Kalshi.Integration.Executor.Handlers;
 
 public sealed class ExecutionUpdateAppliedHandler
