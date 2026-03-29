@@ -1,6 +1,7 @@
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -10,8 +11,9 @@ public sealed class TradeIntentCreatedHandlerTests
     public async Task HandleAsyncShouldPublishExecutedEventWhenMarketLookupSucceeds()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
-        var handler = new TradeIntentCreatedHandler(client, publisher);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store);
 
         await handler.HandleAsync(CreateEnvelope());
 
@@ -25,14 +27,32 @@ public sealed class TradeIntentCreatedHandlerTests
     public async Task HandleAsyncShouldPublishFailedEventWhenMarketLookupFails()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient(null, null, new InvalidOperationException("lookup failed"));
-        var handler = new TradeIntentCreatedHandler(client, publisher);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store);
 
         await handler.HandleAsync(CreateEnvelope());
 
         var published = Assert.Single(publisher.PublishedEvents);
         Assert.Equal("trade-intent.failed", published.Name);
         Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
+    }
+
+    [Fact]
+    public async Task HandleAsyncShouldNotReprocessDuplicateTradeIntentEvent()
+    {
+        var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
+        var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
+        var handler = new TradeIntentCreatedHandler(client, publisher, store);
+
+        var envelope = CreateEnvelope();
+
+        await handler.HandleAsync(envelope);
+        await handler.HandleAsync(envelope);
+
+        Assert.Single(publisher.PublishedEvents);
+        Assert.Single(store.Records);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()

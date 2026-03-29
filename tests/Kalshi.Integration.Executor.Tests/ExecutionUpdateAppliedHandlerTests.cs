@@ -1,6 +1,7 @@
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -10,8 +11,9 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     public async Task HandleAsyncShouldPublishReconciledEventWhenStatusLookupSucceeds()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient("filled", null);
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
 
         await handler.HandleAsync(CreateEnvelope());
 
@@ -24,14 +26,32 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     public async Task HandleAsyncShouldPublishFailureEventWhenStatusLookupFails()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("status failed"));
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
 
         await handler.HandleAsync(CreateEnvelope());
 
         var published = Assert.Single(publisher.PublishedEvents);
         Assert.Equal("execution-update.reconciliation_failed", published.Name);
         Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
+    }
+
+    [Fact]
+    public async Task HandleAsyncShouldNotReprocessDuplicateExecutionUpdateEvent()
+    {
+        var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
+        var client = new StubKalshiExecutionClient("filled", null);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store);
+
+        var envelope = CreateEnvelope();
+
+        await handler.HandleAsync(envelope);
+        await handler.HandleAsync(envelope);
+
+        Assert.Single(publisher.PublishedEvents);
+        Assert.Single(store.Records);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()

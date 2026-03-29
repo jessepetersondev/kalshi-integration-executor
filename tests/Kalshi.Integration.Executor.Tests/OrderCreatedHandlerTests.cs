@@ -1,6 +1,7 @@
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -10,10 +11,11 @@ public sealed class OrderCreatedHandlerTests
     public async Task HandleAsyncShouldPublishSuccessEventWhenKalshiOrderSucceeds()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher);
+        var handler = new OrderCreatedHandler(client, publisher, store);
 
         var envelope = CreateEnvelope();
 
@@ -30,8 +32,9 @@ public sealed class OrderCreatedHandlerTests
     public async Task HandleAsyncShouldPublishFailureEventWhenKalshiOrderFails()
     {
         var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("boom"));
-        var handler = new OrderCreatedHandler(client, publisher);
+        var handler = new OrderCreatedHandler(client, publisher, store);
 
         var envelope = CreateEnvelope();
 
@@ -41,6 +44,25 @@ public sealed class OrderCreatedHandlerTests
         Assert.Equal("order.execution_failed", published.Name);
         Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
         Assert.Equal("boom", published.Attributes["errorMessage"]);
+    }
+
+    [Fact]
+    public async Task HandleAsyncShouldNotReprocessDuplicateEvent()
+    {
+        var publisher = new InMemoryResultEventPublisher();
+        var store = new InMemoryConsumedEventStore();
+        var client = new StubKalshiExecutionClient(
+            new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
+            null);
+        var handler = new OrderCreatedHandler(client, publisher, store);
+
+        var envelope = CreateEnvelope();
+
+        await handler.HandleAsync(envelope);
+        await handler.HandleAsync(envelope);
+
+        Assert.Single(publisher.PublishedEvents);
+        Assert.Single(store.Records);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()

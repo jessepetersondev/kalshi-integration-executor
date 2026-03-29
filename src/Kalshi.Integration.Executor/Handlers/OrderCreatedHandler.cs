@@ -1,5 +1,6 @@
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 
 namespace Kalshi.Integration.Executor.Handlers;
 
@@ -7,15 +8,26 @@ public sealed class OrderCreatedHandler
 {
     private readonly IKalshiExecutionClient _kalshiExecutionClient;
     private readonly IResultEventPublisher _resultEventPublisher;
+    private readonly IConsumedEventStore _consumedEventStore;
 
-    public OrderCreatedHandler(IKalshiExecutionClient kalshiExecutionClient, IResultEventPublisher resultEventPublisher)
+    public OrderCreatedHandler(
+        IKalshiExecutionClient kalshiExecutionClient,
+        IResultEventPublisher resultEventPublisher,
+        IConsumedEventStore consumedEventStore)
     {
         _kalshiExecutionClient = kalshiExecutionClient;
         _resultEventPublisher = resultEventPublisher;
+        _consumedEventStore = consumedEventStore;
     }
 
     public async Task HandleAsync(ApplicationEventEnvelope envelope, CancellationToken cancellationToken = default)
     {
+        var eventKey = envelope.IdempotencyKey ?? envelope.Id.ToString();
+        if (await _consumedEventStore.HasProcessedAsync(eventKey, cancellationToken))
+        {
+            return;
+        }
+
         var request = new KalshiOrderRequest(
             MarketTicker: envelope.Attributes.TryGetValue("ticker", out var ticker) ? ticker ?? string.Empty : string.Empty,
             Side: envelope.Attributes.TryGetValue("side", out var side) ? side ?? string.Empty : string.Empty,
@@ -42,6 +54,7 @@ public sealed class OrderCreatedHandler
                 DateTimeOffset.UtcNow);
 
             await _resultEventPublisher.PublishAsync(successEvent, cancellationToken);
+            await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, cancellationToken);
         }
         catch (Exception exception)
         {

@@ -4,6 +4,7 @@ using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Logging;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Routing;
 using Microsoft.Extensions.Options;
 
@@ -33,6 +34,7 @@ var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.Section
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IResultEventPublisher, InMemoryResultEventPublisher>();
+builder.Services.AddSingleton<IConsumedEventStore, InMemoryConsumedEventStore>();
 builder.Services.AddTransient<OrderCreatedHandler>();
 builder.Services.AddTransient<TradeIntentCreatedHandler>();
 builder.Services.AddTransient<ExecutionUpdateAppliedHandler>();
