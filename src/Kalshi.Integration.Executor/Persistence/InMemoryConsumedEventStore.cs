@@ -39,4 +39,14 @@ public sealed class InMemoryConsumedEventStore : IConsumedEventStore
 
         return Task.CompletedTask;
     }
+
+    public Task<IReadOnlyList<ConsumedEventRecord>> ListRecentAsync(int limit = 100, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        lock (_lock)
+        {
+            return Task.FromResult<IReadOnlyList<ConsumedEventRecord>>(_records.TakeLast(limit).ToArray());
+        }
+    }
 }

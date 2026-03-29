@@ -39,6 +39,7 @@ services:
       Integrations__KalshiApi__PrivateKeyPath: kalshi.key
       FailureHandling__MaxRetryAttempts: "3"
       FailureHandling__BaseDelayMilliseconds: "250"
+      Persistence__ConnectionString: Data Source=/workspace/data/kalshi-integration-executor.db
     depends_on:
       - rabbitmq
     volumes:
