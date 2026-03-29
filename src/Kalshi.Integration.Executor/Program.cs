@@ -1,6 +1,7 @@
 using Kalshi.Integration.Executor;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Logging;
+using Kalshi.Integration.Executor.Messaging;
 using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -11,6 +12,13 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<RabbitMqOptions>()
+    .Bind(builder.Configuration.GetSection(RabbitMqOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddHostedService<ExecutorWorker>();
 
 var host = builder.Build();
