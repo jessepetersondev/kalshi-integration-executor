@@ -34,6 +34,8 @@ builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IResultEventPublisher, InMemoryResultEventPublisher>();
 builder.Services.AddTransient<OrderCreatedHandler>();
+builder.Services.AddTransient<TradeIntentCreatedHandler>();
+builder.Services.AddTransient<ExecutionUpdateAppliedHandler>();
 builder.Services.AddHttpClient<IKalshiExecutionClient, KalshiExecutionClient>((serviceProvider, client) =>
     {
         var options = serviceProvider.GetRequiredService<IOptions<KalshiApiOptions>>().Value;
