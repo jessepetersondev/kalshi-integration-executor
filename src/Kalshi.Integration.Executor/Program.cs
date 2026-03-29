@@ -63,6 +63,7 @@ builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
 builder.Services.AddSingleton<IResultEventPublisher, RabbitMqResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, SqliteConsumedEventStore>();
+builder.Services.AddSingleton<IExecutionRecordStore, SqliteExecutionRecordStore>();
 builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
 builder.Services.AddSingleton<ExecutionReliabilityPolicy>();
 builder.Services.AddTransient<OrderCreatedHandler>();

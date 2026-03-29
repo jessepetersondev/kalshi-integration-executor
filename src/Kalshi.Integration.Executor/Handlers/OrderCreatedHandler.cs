@@ -10,17 +10,20 @@ public sealed class OrderCreatedHandler
     private readonly IKalshiExecutionClient _kalshiExecutionClient;
     private readonly IResultEventPublisher _resultEventPublisher;
     private readonly IConsumedEventStore _consumedEventStore;
+    private readonly IExecutionRecordStore _executionRecordStore;
     private readonly ExecutionReliabilityPolicy _executionReliabilityPolicy;
 
     public OrderCreatedHandler(
         IKalshiExecutionClient kalshiExecutionClient,
         IResultEventPublisher resultEventPublisher,
         IConsumedEventStore consumedEventStore,
+        IExecutionRecordStore executionRecordStore,
         ExecutionReliabilityPolicy executionReliabilityPolicy)
     {
         _kalshiExecutionClient = kalshiExecutionClient;
         _resultEventPublisher = resultEventPublisher;
         _consumedEventStore = consumedEventStore;
+        _executionRecordStore = executionRecordStore;
         _executionReliabilityPolicy = executionReliabilityPolicy;
     }
 
@@ -47,6 +50,20 @@ public sealed class OrderCreatedHandler
                 try
                 {
                     var response = await _kalshiExecutionClient.PlaceOrderAsync(request, token);
+                    await _executionRecordStore.UpsertAsync(
+                        new ExecutionRecord(
+                            response.ExternalOrderId,
+                            response.ClientOrderId,
+                            envelope.ResourceId,
+                            envelope.CorrelationId,
+                            response.Ticker ?? request.MarketTicker,
+                            response.Side ?? request.Side,
+                            response.Action ?? request.Action,
+                            response.Status,
+                            response.RawBody,
+                            DateTimeOffset.UtcNow),
+                        token);
+
                     var successEvent = new ApplicationEventEnvelope(
                         Guid.NewGuid(),
                         "executor",
@@ -57,6 +74,10 @@ public sealed class OrderCreatedHandler
                         new Dictionary<string, string?>
                         {
                             ["externalOrderId"] = response.ExternalOrderId,
+                            ["clientOrderId"] = response.ClientOrderId,
+                            ["ticker"] = response.Ticker ?? request.MarketTicker,
+                            ["side"] = response.Side ?? request.Side,
+                            ["action"] = response.Action ?? request.Action,
                             ["status"] = response.Status,
                             ["sourceEvent"] = envelope.Name,
                         },

@@ -56,7 +56,15 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        return new KalshiOrderResponse(request.ClientOrderId, response.StatusCode.ToString(), body);
+        var snapshot = KalshiOrderResponseParser.Parse(body, request.ClientOrderId);
+        return new KalshiOrderResponse(
+            snapshot.OrderId,
+            snapshot.ClientOrderId,
+            snapshot.Ticker,
+            snapshot.Side,
+            snapshot.Action,
+            snapshot.Status ?? response.StatusCode.ToString(),
+            snapshot.RawBody);
     }
 
     public async Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)

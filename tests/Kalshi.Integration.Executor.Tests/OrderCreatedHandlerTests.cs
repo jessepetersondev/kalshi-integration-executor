@@ -14,13 +14,14 @@ public sealed class OrderCreatedHandlerTests
     public async Task HandleAsyncShouldPublishSuccessEventWhenKalshiOrderSucceeds()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
-            new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
+            new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, store, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
 
         var envelope = CreateEnvelope();
 
@@ -31,6 +32,10 @@ public sealed class OrderCreatedHandlerTests
         Assert.Equal("corr-1", published.CorrelationId);
         Assert.Equal("idem-1", published.IdempotencyKey);
         Assert.Equal("ext-123", published.Attributes["externalOrderId"]);
+        Assert.Equal("client-123", published.Attributes["clientOrderId"]);
+        var record = await executionStore.GetByExternalOrderIdAsync("ext-123");
+        Assert.NotNull(record);
+        Assert.Equal("accepted", record!.Status);
         Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
@@ -38,11 +43,12 @@ public sealed class OrderCreatedHandlerTests
     public async Task HandleAsyncShouldPublishFailureEventWhenKalshiOrderFails()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("boom"));
-        var handler = new OrderCreatedHandler(client, publisher, store, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
 
         var envelope = CreateEnvelope();
 
@@ -52,19 +58,22 @@ public sealed class OrderCreatedHandlerTests
         Assert.Equal("order.execution_failed", published.Name);
         Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
         Assert.Equal("boom", published.Attributes["errorMessage"]);
+        var record = await executionStore.GetByExternalOrderIdAsync("ext-123");
+        Assert.Null(record);
     }
 
     [Fact]
     public async Task HandleAsyncShouldNotReprocessDuplicateEvent()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
-            new KalshiOrderResponse("ext-123", "Accepted", "{\"ok\":true}"),
+            new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, store, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
 
         var envelope = CreateEnvelope();
 
@@ -72,7 +81,9 @@ public sealed class OrderCreatedHandlerTests
         await handler.HandleAsync(envelope);
 
         Assert.Single(publisher.PublishedEvents);
-        Assert.Single(store.Records);
+        Assert.Single(consumedStore.Records);
+        var records = await executionStore.ListRecentAsync();
+        Assert.Single(records);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()

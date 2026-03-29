@@ -14,17 +14,22 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     public async Task HandleAsyncShouldPublishReconciledEventWhenStatusLookupSucceeds()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
-        var client = new StubKalshiExecutionClient("filled", null);
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
+        var client = new StubKalshiExecutionClient("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}", null);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
         var published = Assert.Single(publisher.PublishedEvents);
         Assert.Equal("execution-update.reconciled", published.Name);
         Assert.Equal("filled", published.Attributes["status"]);
+        Assert.Equal("client-123", published.Attributes["clientOrderId"]);
+        var record = await executionStore.GetByExternalOrderIdAsync("ext-123");
+        Assert.NotNull(record);
+        Assert.Equal("filled", record!.Status);
         Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
@@ -32,28 +37,32 @@ public sealed class ExecutionUpdateAppliedHandlerTests
     public async Task HandleAsyncShouldPublishFailureEventWhenStatusLookupFails()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("status failed"));
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 
         await handler.HandleAsync(CreateEnvelope());
 
         var published = Assert.Single(publisher.PublishedEvents);
         Assert.Equal("execution-update.reconciliation_failed", published.Name);
         Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
+        var record = await executionStore.GetByExternalOrderIdAsync("ext-123");
+        Assert.Null(record);
     }
 
     [Fact]
     public async Task HandleAsyncShouldNotReprocessDuplicateExecutionUpdateEvent()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
-        var client = new StubKalshiExecutionClient("filled", null);
-        var handler = new ExecutionUpdateAppliedHandler(client, publisher, store, policy);
+        var client = new StubKalshiExecutionClient("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}", null);
+        var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 
         var envelope = CreateEnvelope();
 
@@ -61,7 +70,9 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         await handler.HandleAsync(envelope);
 
         Assert.Single(publisher.PublishedEvents);
-        Assert.Single(store.Records);
+        Assert.Single(consumedStore.Records);
+        var records = await executionStore.ListRecentAsync();
+        Assert.Single(records);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()
@@ -103,7 +114,7 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         }
 
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult(new KalshiOrderResponse("ext-1", "Accepted", "{}"));
+            => Task.FromResult(new KalshiOrderResponse("ext-1", "client-1", "KXBTC", "yes", "buy", "accepted", "{}"));
 
         public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("cancelled");

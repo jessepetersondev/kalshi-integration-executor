@@ -10,17 +10,20 @@ public sealed class ExecutionUpdateAppliedHandler
     private readonly IKalshiExecutionClient _kalshiExecutionClient;
     private readonly IResultEventPublisher _resultEventPublisher;
     private readonly IConsumedEventStore _consumedEventStore;
+    private readonly IExecutionRecordStore _executionRecordStore;
     private readonly ExecutionReliabilityPolicy _executionReliabilityPolicy;
 
     public ExecutionUpdateAppliedHandler(
         IKalshiExecutionClient kalshiExecutionClient,
         IResultEventPublisher resultEventPublisher,
         IConsumedEventStore consumedEventStore,
+        IExecutionRecordStore executionRecordStore,
         ExecutionReliabilityPolicy executionReliabilityPolicy)
     {
         _kalshiExecutionClient = kalshiExecutionClient;
         _resultEventPublisher = resultEventPublisher;
         _consumedEventStore = consumedEventStore;
+        _executionRecordStore = executionRecordStore;
         _executionReliabilityPolicy = executionReliabilityPolicy;
     }
 
@@ -43,7 +46,23 @@ public sealed class ExecutionUpdateAppliedHandler
             {
                 try
                 {
-                    var status = await _kalshiExecutionClient.GetOrderStatusAsync(externalOrderId, token);
+                    var rawStatus = await _kalshiExecutionClient.GetOrderStatusAsync(externalOrderId, token);
+                    var snapshot = KalshiOrderResponseParser.Parse(rawStatus, envelope.ResourceId ?? externalOrderId);
+
+                    await _executionRecordStore.UpsertAsync(
+                        new ExecutionRecord(
+                            snapshot.OrderId,
+                            snapshot.ClientOrderId,
+                            envelope.ResourceId,
+                            envelope.CorrelationId,
+                            snapshot.Ticker,
+                            snapshot.Side,
+                            snapshot.Action,
+                            snapshot.Status,
+                            snapshot.RawBody,
+                            DateTimeOffset.UtcNow),
+                        token);
+
                     var successEvent = new ApplicationEventEnvelope(
                         Guid.NewGuid(),
                         "executor",
@@ -53,8 +72,12 @@ public sealed class ExecutionUpdateAppliedHandler
                         envelope.IdempotencyKey,
                         new Dictionary<string, string?>
                         {
-                            ["externalOrderId"] = externalOrderId,
-                            ["status"] = status,
+                            ["externalOrderId"] = snapshot.OrderId,
+                            ["clientOrderId"] = snapshot.ClientOrderId,
+                            ["ticker"] = snapshot.Ticker,
+                            ["side"] = snapshot.Side,
+                            ["action"] = snapshot.Action,
+                            ["status"] = snapshot.Status,
                             ["sourceEvent"] = envelope.Name,
                         },
                         DateTimeOffset.UtcNow);

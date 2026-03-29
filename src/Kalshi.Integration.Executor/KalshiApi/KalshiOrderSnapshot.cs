@@ -1,7 +1,7 @@
 namespace Kalshi.Integration.Executor.KalshiApi;
 
-public sealed record KalshiOrderResponse(
-    string ExternalOrderId,
+public sealed record KalshiOrderSnapshot(
+    string OrderId,
     string ClientOrderId,
     string? Ticker,
     string? Side,

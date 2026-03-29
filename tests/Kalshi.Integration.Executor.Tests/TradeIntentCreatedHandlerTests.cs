@@ -106,7 +106,7 @@ public sealed class TradeIntentCreatedHandlerTests
         }
 
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult(new KalshiOrderResponse("ext-1", "Accepted", "{}"));
+            => Task.FromResult(new KalshiOrderResponse("ext-1", "client-1", "KXBTC", "yes", "buy", "accepted", "{}"));
 
         public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("cancelled");

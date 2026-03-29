@@ -15,14 +15,15 @@ public sealed class EventDispatcherTests
     public async Task DispatchAsyncShouldInvokeOrderCreatedHandler()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
-            new OrderCreatedHandler(client, publisher, store, policy),
-            new TradeIntentCreatedHandler(client, publisher, store, policy),
-            new ExecutionUpdateAppliedHandler(client, publisher, store, policy));
+            new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy),
+            new TradeIntentCreatedHandler(client, publisher, consumedStore, policy),
+            new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy));
 
         await dispatcher.DispatchAsync(new ExecutorRoutingResult(ExecutorRoute.OrderCreated, CreateEnvelope("order.created")));
 
@@ -34,14 +35,15 @@ public sealed class EventDispatcherTests
     public async Task DispatchAsyncShouldInvokeTradeIntentHandler()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
-            new OrderCreatedHandler(client, publisher, store, policy),
-            new TradeIntentCreatedHandler(client, publisher, store, policy),
-            new ExecutionUpdateAppliedHandler(client, publisher, store, policy));
+            new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy),
+            new TradeIntentCreatedHandler(client, publisher, consumedStore, policy),
+            new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy));
 
         await dispatcher.DispatchAsync(new ExecutorRoutingResult(ExecutorRoute.TradeIntentCreated, CreateEnvelope("trade-intent.created")));
 
@@ -53,14 +55,15 @@ public sealed class EventDispatcherTests
     public async Task DispatchAsyncShouldInvokeExecutionUpdateHandler()
     {
         var publisher = new InMemoryResultEventPublisher();
-        var store = new InMemoryConsumedEventStore();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
-            new OrderCreatedHandler(client, publisher, store, policy),
-            new TradeIntentCreatedHandler(client, publisher, store, policy),
-            new ExecutionUpdateAppliedHandler(client, publisher, store, policy));
+            new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy),
+            new TradeIntentCreatedHandler(client, publisher, consumedStore, policy),
+            new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy));
 
         await dispatcher.DispatchAsync(new ExecutorRoutingResult(ExecutorRoute.ExecutionUpdateApplied, CreateEnvelope("execution-update.applied")));
 
@@ -97,13 +100,13 @@ public sealed class EventDispatcherTests
     private sealed class StubKalshiExecutionClient : IKalshiExecutionClient
     {
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult(new KalshiOrderResponse("ext-123", "Accepted", "{}"));
+            => Task.FromResult(new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{}"));
 
         public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("cancelled");
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("filled");
+            => Task.FromResult("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}");
 
         public Task<string> GetMarketAsync(string marketTicker, CancellationToken cancellationToken = default)
             => Task.FromResult("{\"ticker\":\"KXBTC\"}");
