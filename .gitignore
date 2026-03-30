@@ -1,9 +1,22 @@
 bin/
 obj/
 .vs/
-TestResults/
 *.user
 *.suo
+*.db
+*.db-shm
+*.db-wal
+*.log
+TestResults/
+coverage/
+coverage.*
 *.key
 __pycache__/
 *.pyc
+
+# Local/untracked environment overrides
+.env
+.env.local
+.env.*.local
+src/Kalshi.Integration.Executor/appsettings.Local.json
+src/Kalshi.Integration.Executor/appsettings.*.local.json

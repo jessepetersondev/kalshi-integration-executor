@@ -1,0 +1,68 @@
+trigger:
+  branches:
+    include:
+      - master
+      - main
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - master
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  BuildConfiguration: Release
+  DotNetVersion: 8.0.x
+  Solution: $(Build.SourcesDirectory)/KalshiIntegrationExecutor.sln
+  DotNetTestResultsDirectory: $(Agent.TempDirectory)/dotnet-test-results
+
+stages:
+  - stage: validate
+    displayName: Validate build and tests
+    jobs:
+      - job: build_test
+        displayName: Build and test executor repo
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: UseDotNet@2
+            displayName: Install .NET SDK $(DotNetVersion)
+            inputs:
+              packageType: sdk
+              version: $(DotNetVersion)
+
+          - script: >-
+              dotnet restore "$(Solution)"
+              --verbosity minimal
+              -p:NuGetAudit=true
+              -p:NuGetAuditMode=all
+              -p:NuGetAuditLevel=high
+            displayName: Restore .NET solution and audit NuGet dependencies
+
+          - script: dotnet format "$(Solution)" --verify-no-changes --no-restore
+            displayName: Verify .NET formatting
+
+          - script: dotnet build "$(Solution)" --configuration $(BuildConfiguration) --no-restore -p:ContinuousIntegrationBuild=true
+            displayName: Build .NET solution with analyzer enforcement
+
+          - script: >-
+              dotnet test "$(Solution)"
+              --configuration $(BuildConfiguration)
+              --no-build
+              --logger "trx;LogFileName=kalshi-integration-executor.trx"
+              --results-directory "$(DotNetTestResultsDirectory)"
+            displayName: Run .NET tests
+
+          - task: PublishTestResults@2
+            displayName: Publish .NET test results
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: VSTest
+              testResultsFiles: $(DotNetTestResultsDirectory)/**/*.trx
+              failTaskOnFailedTests: true
+              testRunTitle: Kalshi Integration Executor .NET Tests

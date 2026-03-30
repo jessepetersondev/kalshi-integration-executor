@@ -22,6 +22,7 @@ Operational docs:
 - `docs/production-secrets.md`
 - `docs/end-to-end-resilience.md`
 - `docs/dlq-operations.md`
+- `docs/azure-devops-quality-gates.md`
 
 ## Current local RabbitMQ bootstrap
 
@@ -122,10 +123,26 @@ The results queue messages are published with routing keys like:
 ### Validation commands
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
+dotnet format KalshiIntegrationExecutor.sln --verify-no-changes
 dotnet build KalshiIntegrationExecutor.sln -c Release /p:TreatWarningsAsErrors=true
 dotnet test KalshiIntegrationExecutor.sln -c Release --no-build
 docker compose config
 ```
+
+## Azure DevOps CI
+
+The repo now includes an Azure DevOps validation pipeline at `azure-pipelines.yml`.
+
+The pipeline is intended to be used as required build validation for PRs targeting `main` and `master`.
+
+The pipeline currently:
+- restores the .NET solution with NuGet vulnerability auditing enabled
+- verifies formatting with `dotnet format --verify-no-changes`
+- builds the solution with analyzers and code-style warnings enforced as errors
+- runs .NET tests and publishes TRX test results
+
+See:
+- `docs/azure-devops-quality-gates.md`
 
 ### Full readiness suite
 
