@@ -40,6 +40,13 @@ services:
       FailureHandling__MaxRetryAttempts: "3"
       FailureHandling__BaseDelayMilliseconds: "250"
       Persistence__ConnectionString: Data Source=/workspace/data/kalshi-integration-executor.db
+      RiskControls__LiveExecutionEnabled: "true"
+      RiskControls__KillSwitchEnabled: "false"
+      RiskControls__MaxOrderQuantity: "5"
+      RiskControls__MaxLimitPriceDollars: "1.0"
+      RiskControls__MaxOrderNotionalDollars: "5.0"
+      RiskControls__MaxDailyNotionalDollars: "25.0"
+      RiskControls__AllowedTickerPrefixes__0: KXBTC-
     depends_on:
       - rabbitmq
     volumes:

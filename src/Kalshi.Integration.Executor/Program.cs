@@ -57,6 +57,12 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<RiskControlsOptions>()
+    .Bind(builder.Configuration.GetSection(RiskControlsOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.SectionName).Get<KalshiApiOptions>() ?? new KalshiApiOptions();
 
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
@@ -65,6 +71,7 @@ builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
 builder.Services.AddSingleton<IResultEventPublisher, RabbitMqResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, SqliteConsumedEventStore>();
 builder.Services.AddSingleton<IExecutionRecordStore, SqliteExecutionRecordStore>();
+builder.Services.AddSingleton<IExecutionRiskGuard, ExecutionRiskGuard>();
 builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
 builder.Services.AddSingleton<ExecutionReliabilityPolicy>();
 builder.Services.AddTransient<OrderCreatedHandler>();

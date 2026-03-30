@@ -1,8 +1,6 @@
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Persistence;
-
-
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -31,6 +29,9 @@ public sealed class SqliteExecutionRecordStoreTests
                 "yes",
                 "buy",
                 "filled",
+                1,
+                0.25m,
+                0.25m,
                 "{\"order\":{}}",
                 DateTimeOffset.UtcNow));
 
@@ -41,6 +42,7 @@ public sealed class SqliteExecutionRecordStoreTests
             Assert.NotNull(record);
             Assert.Equal("client-123", record!.ClientOrderId);
             Assert.Equal("filled", record.Status);
+            Assert.Equal(0.25m, record.NotionalDollars);
             Assert.Single(recent);
         }
         finally

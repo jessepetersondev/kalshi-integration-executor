@@ -31,6 +31,9 @@ INSERT INTO execution_records (
     side,
     action,
     status,
+    quantity,
+    limit_price_dollars,
+    notional_dollars,
     raw_response,
     recorded_at_utc
 )
@@ -43,6 +46,9 @@ VALUES (
     $side,
     $action,
     $status,
+    $quantity,
+    $limit_price_dollars,
+    $notional_dollars,
     $raw_response,
     $recorded_at_utc
 )
@@ -54,6 +60,9 @@ ON CONFLICT(external_order_id) DO UPDATE SET
     side = excluded.side,
     action = excluded.action,
     status = excluded.status,
+    quantity = COALESCE(excluded.quantity, execution_records.quantity),
+    limit_price_dollars = COALESCE(excluded.limit_price_dollars, execution_records.limit_price_dollars),
+    notional_dollars = COALESCE(excluded.notional_dollars, execution_records.notional_dollars),
     raw_response = excluded.raw_response,
     recorded_at_utc = excluded.recorded_at_utc;";
         command.Parameters.AddWithValue("$external_order_id", record.ExternalOrderId);
@@ -64,6 +73,9 @@ ON CONFLICT(external_order_id) DO UPDATE SET
         command.Parameters.AddWithValue("$side", (object?)record.Side ?? DBNull.Value);
         command.Parameters.AddWithValue("$action", (object?)record.Action ?? DBNull.Value);
         command.Parameters.AddWithValue("$status", (object?)record.Status ?? DBNull.Value);
+        command.Parameters.AddWithValue("$quantity", (object?)record.Quantity ?? DBNull.Value);
+        command.Parameters.AddWithValue("$limit_price_dollars", (object?)record.LimitPriceDollars ?? DBNull.Value);
+        command.Parameters.AddWithValue("$notional_dollars", (object?)record.NotionalDollars ?? DBNull.Value);
         command.Parameters.AddWithValue("$raw_response", record.RawResponse);
         command.Parameters.AddWithValue("$recorded_at_utc", record.RecordedAtUtc.ToString("O", CultureInfo.InvariantCulture));
         await command.ExecuteNonQueryAsync(cancellationToken);
@@ -75,7 +87,7 @@ ON CONFLICT(external_order_id) DO UPDATE SET
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = @"
-SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, raw_response, recorded_at_utc
+SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
 FROM execution_records
 WHERE external_order_id = $external_order_id
 LIMIT 1;";
@@ -95,7 +107,7 @@ LIMIT 1;";
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = @"
-SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, raw_response, recorded_at_utc
+SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
 FROM execution_records
 ORDER BY recorded_at_utc DESC
 LIMIT $limit;";
@@ -121,11 +133,28 @@ LIMIT $limit;";
             reader.IsDBNull(5) ? null : reader.GetString(5),
             reader.IsDBNull(6) ? null : reader.GetString(6),
             reader.IsDBNull(7) ? null : reader.GetString(7),
-            reader.GetString(8),
-            DateTimeOffset.Parse(reader.GetString(9), CultureInfo.InvariantCulture));
+            reader.IsDBNull(8) ? null : reader.GetInt32(8),
+            reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+            reader.IsDBNull(10) ? null : reader.GetDecimal(10),
+            reader.GetString(11),
+            DateTimeOffset.Parse(reader.GetString(12), CultureInfo.InvariantCulture));
     }
 
     private SqliteConnection CreateConnection() => new(_connectionString);
+
+    private static void TryAddColumn(SqliteConnection connection, string tableName, string columnName, string definition)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {definition};";
+        try
+        {
+            command.ExecuteNonQuery();
+        }
+        catch (SqliteException)
+        {
+            // Ignore when the column already exists.
+        }
+    }
 
     private void EnsureDatabase()
     {
@@ -153,10 +182,16 @@ CREATE TABLE IF NOT EXISTS execution_records (
     side TEXT NULL,
     action TEXT NULL,
     status TEXT NULL,
+    quantity INTEGER NULL,
+    limit_price_dollars REAL NULL,
+    notional_dollars REAL NULL,
     raw_response TEXT NOT NULL,
     recorded_at_utc TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_execution_records_recorded_at_utc ON execution_records(recorded_at_utc DESC);";
         command.ExecuteNonQuery();
+        TryAddColumn(connection, "execution_records", "quantity", "INTEGER NULL");
+        TryAddColumn(connection, "execution_records", "limit_price_dollars", "REAL NULL");
+        TryAddColumn(connection, "execution_records", "notional_dollars", "REAL NULL");
     }
 }

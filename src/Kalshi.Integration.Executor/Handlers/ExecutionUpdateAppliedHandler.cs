@@ -50,6 +50,7 @@ public sealed class ExecutionUpdateAppliedHandler
                     var rawStatus = await _kalshiExecutionClient.GetOrderStatusAsync(externalOrderId, token);
                     var snapshot = KalshiOrderResponseParser.Parse(rawStatus, envelope.ResourceId ?? externalOrderId);
 
+                    var existingRecord = await _executionRecordStore.GetByExternalOrderIdAsync(snapshot.OrderId, token);
                     await _executionRecordStore.UpsertAsync(
                         new ExecutionRecord(
                             snapshot.OrderId,
@@ -60,6 +61,9 @@ public sealed class ExecutionUpdateAppliedHandler
                             snapshot.Side,
                             snapshot.Action,
                             snapshot.Status,
+                            existingRecord?.Quantity,
+                            existingRecord?.LimitPriceDollars,
+                            existingRecord?.NotionalDollars,
                             snapshot.RawBody,
                             DateTimeOffset.UtcNow),
                         token);

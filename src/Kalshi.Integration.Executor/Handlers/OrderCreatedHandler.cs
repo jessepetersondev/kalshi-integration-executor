@@ -12,6 +12,7 @@ public sealed class OrderCreatedHandler
     private readonly IResultEventPublisher _resultEventPublisher;
     private readonly IConsumedEventStore _consumedEventStore;
     private readonly IExecutionRecordStore _executionRecordStore;
+    private readonly IExecutionRiskGuard _executionRiskGuard;
     private readonly ExecutionReliabilityPolicy _executionReliabilityPolicy;
 
     public OrderCreatedHandler(
@@ -19,12 +20,14 @@ public sealed class OrderCreatedHandler
         IResultEventPublisher resultEventPublisher,
         IConsumedEventStore consumedEventStore,
         IExecutionRecordStore executionRecordStore,
+        IExecutionRiskGuard executionRiskGuard,
         ExecutionReliabilityPolicy executionReliabilityPolicy)
     {
         _kalshiExecutionClient = kalshiExecutionClient;
         _resultEventPublisher = resultEventPublisher;
         _consumedEventStore = consumedEventStore;
         _executionRecordStore = executionRecordStore;
+        _executionRiskGuard = executionRiskGuard;
         _executionReliabilityPolicy = executionReliabilityPolicy;
     }
 
@@ -42,6 +45,33 @@ public sealed class OrderCreatedHandler
             Quantity: envelope.Attributes.TryGetValue("quantity", out var quantity) && int.TryParse(quantity, out var parsedQuantity) ? parsedQuantity : 0,
             LimitPrice: envelope.Attributes.TryGetValue("limitPrice", out var limitPrice) && decimal.TryParse(limitPrice, out var parsedLimitPrice) ? parsedLimitPrice : 0m,
             ClientOrderId: envelope.ResourceId ?? envelope.Id.ToString());
+
+        var riskDecision = await _executionRiskGuard.EvaluateAsync(request, cancellationToken);
+        if (!riskDecision.IsAllowed)
+        {
+            var blockedEvent = new ApplicationEventEnvelope(
+                Guid.NewGuid(),
+                "executor",
+                "order.execution_blocked",
+                envelope.ResourceId,
+                envelope.CorrelationId,
+                envelope.IdempotencyKey,
+                new Dictionary<string, string?>
+                {
+                    ["ticker"] = request.MarketTicker,
+                    ["side"] = request.Side,
+                    ["quantity"] = request.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["limitPrice"] = request.LimitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["blockCode"] = riskDecision.Code,
+                    ["blockReason"] = riskDecision.Reason,
+                    ["sourceEvent"] = envelope.Name,
+                },
+                DateTimeOffset.UtcNow);
+
+            await _resultEventPublisher.PublishAsync(blockedEvent, cancellationToken);
+            await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, cancellationToken);
+            return;
+        }
 
         await _executionReliabilityPolicy.ExecuteAsync(
             envelope,
@@ -61,6 +91,9 @@ public sealed class OrderCreatedHandler
                             response.Side ?? request.Side,
                             response.Action ?? request.Action,
                             response.Status,
+                            request.Quantity,
+                            request.LimitPrice,
+                            request.Quantity * request.LimitPrice,
                             response.RawBody,
                             DateTimeOffset.UtcNow),
                         token);

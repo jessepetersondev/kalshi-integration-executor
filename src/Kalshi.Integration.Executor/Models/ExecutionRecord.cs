@@ -9,5 +9,8 @@ public sealed record ExecutionRecord(
     string? Side,
     string? Action,
     string? Status,
+    int? Quantity,
+    decimal? LimitPriceDollars,
+    decimal? NotionalDollars,
     string RawResponse,
     DateTimeOffset RecordedAtUtc);

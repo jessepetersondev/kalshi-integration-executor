@@ -1,12 +1,10 @@
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
 using Kalshi.Integration.Executor.KalshiApi;
-using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Messaging;
-
-
+using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 
@@ -19,11 +17,12 @@ public sealed class OrderCreatedHandlerTests
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy);
 
         var envelope = CreateEnvelope();
 
@@ -48,9 +47,10 @@ public sealed class OrderCreatedHandlerTests
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("boom"));
-        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy);
 
         var envelope = CreateEnvelope();
 
@@ -71,11 +71,12 @@ public sealed class OrderCreatedHandlerTests
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
         var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);
-        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, policy);
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy);
 
         var envelope = CreateEnvelope();
 
