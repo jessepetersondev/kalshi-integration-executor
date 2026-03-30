@@ -15,6 +15,7 @@ The executor now includes:
 - durable dead-letter diagnostics in SQLite
 - DLQ inspect/replay CLI tooling
 - automated resilience-oriented end-to-end tests
+- committed live RabbitMQ smoke validation
 
 Operational docs:
 
@@ -131,6 +132,15 @@ docker compose config
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
 bash scripts/run-end-to-end-suite.sh
+```
+
+### Live RabbitMQ smoke harness
+
+This committed smoke harness stands up RabbitMQ, runs the real worker against a mock Kalshi API, validates DLQ persistence + replay, and checks duplicate suppression.
+
+```bash
+cd /home/ai/clawd/projects/kalshi-integration-executor
+python3 scripts/run-live-smoke.py
 ```
 
 ## DLQ inspection and replay

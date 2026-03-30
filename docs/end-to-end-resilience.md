@@ -7,12 +7,20 @@ The executor now includes an automated resilience-oriented end-to-end suite cove
 - dead-letter creation after retry exhaustion
 - dead-letter replay back into the inbound event path
 - RabbitMQ automatic/topology recovery configuration verification
+- committed live RabbitMQ smoke validation against a mock Kalshi API
 
 ## Run the full readiness suite
 
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
 bash scripts/run-end-to-end-suite.sh
+```
+
+## Run the committed live smoke harness directly
+
+```bash
+cd /home/ai/clawd/projects/kalshi-integration-executor
+python3 scripts/run-live-smoke.py
 ```
 
 ## Important test classes
