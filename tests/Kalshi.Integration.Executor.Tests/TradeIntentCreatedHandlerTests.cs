@@ -17,8 +17,9 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
         var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 
@@ -36,8 +37,9 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(null, null, new InvalidOperationException("lookup failed"));
         var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 
@@ -53,8 +55,9 @@ public sealed class TradeIntentCreatedHandlerTests
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(marketResponse: "{\"ticker\":\"KXBTC\"}", orderStatusResponse: null, exception: null);
         var handler = new TradeIntentCreatedHandler(client, publisher, store, policy);
 

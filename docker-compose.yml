@@ -35,8 +35,14 @@ services:
       Integrations__KalshiApi__BaseUrl: https://api.elections.kalshi.com
       Integrations__KalshiApi__TimeoutSeconds: "10"
       Integrations__KalshiApi__RetryAttempts: "2"
-      Integrations__KalshiApi__AccessKeyId: ${KALSHI_ACCESS_KEY_ID}
-      Integrations__KalshiApi__PrivateKeyPath: kalshi.key
+      Integrations__KalshiApi__AccessKeyIdEnvironmentVariable: KALSHI_ACCESS_KEY_ID
+      Integrations__KalshiApi__PrivateKeyPemEnvironmentVariable: KALSHI_PRIVATE_KEY_PEM
+      Integrations__KalshiApi__PrivateKeyPemBase64EnvironmentVariable: KALSHI_PRIVATE_KEY_PEM_BASE64
+      Integrations__KalshiApi__PrivateKeyPathEnvironmentVariable: KALSHI_PRIVATE_KEY_PATH
+      KALSHI_ACCESS_KEY_ID: ${KALSHI_ACCESS_KEY_ID:-}
+      KALSHI_PRIVATE_KEY_PEM: ${KALSHI_PRIVATE_KEY_PEM:-}
+      KALSHI_PRIVATE_KEY_PEM_BASE64: ${KALSHI_PRIVATE_KEY_PEM_BASE64:-}
+      KALSHI_PRIVATE_KEY_PATH: ${KALSHI_PRIVATE_KEY_PATH:-}
       FailureHandling__MaxRetryAttempts: "3"
       FailureHandling__BaseDelayMilliseconds: "250"
       Persistence__ConnectionString: Data Source=/workspace/data/kalshi-integration-executor.db

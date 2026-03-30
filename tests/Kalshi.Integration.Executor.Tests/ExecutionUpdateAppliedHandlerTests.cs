@@ -18,8 +18,9 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}", null);
         var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 
@@ -41,8 +42,9 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("status failed"));
         var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 
@@ -61,8 +63,9 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}", null);
         var handler = new ExecutionUpdateAppliedHandler(client, publisher, consumedStore, executionStore, policy);
 

@@ -16,8 +16,9 @@ public sealed class OrderCreatedHandlerRiskTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new CountingKalshiExecutionClient();
         var riskGuard = new ExecutionRiskGuard(
             Options.Create(new RiskControlsOptions

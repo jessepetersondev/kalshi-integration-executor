@@ -6,6 +6,22 @@ This repository starts as the worker skeleton for that downstream executor servi
 
 See `Kalshi.Integration.Executor.md` for the detailed design and implementation plan.
 
+## Production-readiness additions
+
+The executor now includes:
+
+- live-trading risk controls and a kill switch
+- production-safe Kalshi secret resolution + startup validation
+- durable dead-letter diagnostics in SQLite
+- DLQ inspect/replay CLI tooling
+- automated resilience-oriented end-to-end tests
+
+Operational docs:
+
+- `docs/production-secrets.md`
+- `docs/end-to-end-resilience.md`
+- `docs/dlq-operations.md`
+
 ## Current local RabbitMQ bootstrap
 
 The executor now includes first-pass RabbitMQ topology bootstrap support.
@@ -31,6 +47,7 @@ The executor now includes a first-pass reliability policy:
 - retries transient failures (`HttpRequestException`, `TaskCanceledException`, `TimeoutException`)
 - uses bounded retry attempts from `FailureHandling`
 - dead-letters exhausted failures into the configured dead-letter queue
+- persists dead-letter diagnostics for later inspection/replay
 
 Current configuration section:
 - `FailureHandling:MaxRetryAttempts`
@@ -48,9 +65,10 @@ It brings up:
 - the executor worker
 
 ### Start locally
-Before running compose, export your Kalshi access key ID in the shell:
+Before running compose, export your Kalshi access key ID and either your PEM or PEM base64 in the shell:
 ```bash
 export KALSHI_ACCESS_KEY_ID="your-access-key-id"
+export KALSHI_PRIVATE_KEY_PEM_BASE64="$(base64 -w0 ~/secrets/kalshi-private-key.pem)"
 ```
 
 Then start locally:
@@ -106,4 +124,27 @@ cd /home/ai/clawd/projects/kalshi-integration-executor
 dotnet build KalshiIntegrationExecutor.sln -c Release /p:TreatWarningsAsErrors=true
 dotnet test KalshiIntegrationExecutor.sln -c Release --no-build
 docker compose config
+```
+
+### Full readiness suite
+
+```bash
+cd /home/ai/clawd/projects/kalshi-integration-executor
+bash scripts/run-end-to-end-suite.sh
+```
+
+## DLQ inspection and replay
+
+Inspect recent dead-letter records:
+
+```bash
+dotnet run --project src/Kalshi.Integration.Executor/Kalshi.Integration.Executor.csproj -- \
+  dlq inspect --limit 20
+```
+
+Replay a selected dead-letter record:
+
+```bash
+dotnet run --project src/Kalshi.Integration.Executor/Kalshi.Integration.Executor.csproj -- \
+  dlq replay --id <dead-letter-record-id>
 ```

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 
 
 
@@ -13,13 +14,15 @@ public sealed class ExecutionReliabilityPolicyTests
     public async Task ExecuteAsyncShouldRetryTransientFailureAndEventuallySucceed()
     {
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var policy = new ExecutionReliabilityPolicy(
             Options.Create(new FailureHandlingOptions
             {
                 MaxRetryAttempts = 2,
                 BaseDelayMilliseconds = 1,
             }),
-            deadLetterPublisher);
+            deadLetterPublisher,
+            deadLetterStore);
 
         var attempts = 0;
         await policy.ExecuteAsync(
@@ -38,19 +41,22 @@ public sealed class ExecutionReliabilityPolicyTests
 
         Assert.Equal(2, attempts);
         Assert.Empty(deadLetterPublisher.PublishedEvents);
+        Assert.Empty(await deadLetterStore.ListRecentAsync());
     }
 
     [Fact]
     public async Task ExecuteAsyncShouldDeadLetterAfterRetryExhaustion()
     {
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var policy = new ExecutionReliabilityPolicy(
             Options.Create(new FailureHandlingOptions
             {
                 MaxRetryAttempts = 1,
                 BaseDelayMilliseconds = 1,
             }),
-            deadLetterPublisher);
+            deadLetterPublisher,
+            deadLetterStore);
 
         var attempts = 0;
         await policy.ExecuteAsync(
@@ -66,6 +72,10 @@ public sealed class ExecutionReliabilityPolicyTests
         var deadLetter = Assert.Single(deadLetterPublisher.PublishedEvents);
         Assert.Equal("order.created.dead_lettered", deadLetter.Name);
         Assert.Equal("kalshi.integration.executor.dlq", deadLetter.Attributes["deadLetterQueue"]);
+        Assert.Equal("2", deadLetter.Attributes["attemptCount"]);
+        var persisted = Assert.Single(await deadLetterStore.ListRecentAsync());
+        Assert.Equal("order.created", persisted.SourceEventName);
+        Assert.Equal(2, persisted.AttemptCount);
     }
 
     private static ApplicationEventEnvelope CreateEnvelope()

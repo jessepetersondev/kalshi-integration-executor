@@ -1,18 +1,19 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
-
+using RabbitMQ.Client;
 
 namespace Kalshi.Integration.Executor.Messaging;
 
-public sealed class RabbitMqResultEventPublisher : IResultEventPublisher
+public sealed class RabbitMqInboundEventPublisher : IInboundEventPublisher
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly RabbitMqConnectionFactoryFactory _connectionFactoryFactory;
     private readonly RabbitMqOptions _options;
 
-    public RabbitMqResultEventPublisher(RabbitMqConnectionFactoryFactory connectionFactoryFactory, Microsoft.Extensions.Options.IOptions<RabbitMqOptions> options)
+    public RabbitMqInboundEventPublisher(RabbitMqConnectionFactoryFactory connectionFactoryFactory, IOptions<RabbitMqOptions> options)
     {
         _connectionFactoryFactory = connectionFactoryFactory;
         _options = options.Value;
@@ -22,9 +23,9 @@ public sealed class RabbitMqResultEventPublisher : IResultEventPublisher
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var routingKey = BuildRoutingKey(applicationEvent);
         var payload = JsonSerializer.Serialize(applicationEvent, SerializerOptions);
         var body = Encoding.UTF8.GetBytes(payload);
+        var routingKey = BuildRoutingKey(applicationEvent);
 
         using var connection = _connectionFactoryFactory.Create().CreateConnection(_options.ClientProvidedName);
         using var channel = connection.CreateModel();
@@ -44,7 +45,7 @@ public sealed class RabbitMqResultEventPublisher : IResultEventPublisher
 
     private static string BuildRoutingKey(ApplicationEventEnvelope applicationEvent)
     {
-        var name = applicationEvent.Name.Trim().ToLowerInvariant().Replace('-', '_').Replace('.', '_');
-        return $"kalshi.integration.results.{name}";
+        static string Normalize(string value) => value.Trim().ToLowerInvariant().Replace('-', '_').Replace('.', '_');
+        return $"kalshi.integration.{Normalize(applicationEvent.Category)}.{Normalize(applicationEvent.Name)}";
     }
 }

@@ -14,17 +14,20 @@ public sealed class RabbitMqEventConsumer : BackgroundService
     private readonly ILogger<RabbitMqEventConsumer> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RabbitMqTopologyBootstrapper _topologyBootstrapper;
+    private readonly RabbitMqConnectionFactoryFactory _connectionFactoryFactory;
     private readonly RabbitMqOptions _options;
 
     public RabbitMqEventConsumer(
         ILogger<RabbitMqEventConsumer> logger,
         IServiceScopeFactory scopeFactory,
         RabbitMqTopologyBootstrapper topologyBootstrapper,
+        RabbitMqConnectionFactoryFactory connectionFactoryFactory,
         IOptions<RabbitMqOptions> options)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
         _topologyBootstrapper = topologyBootstrapper;
+        _connectionFactoryFactory = connectionFactoryFactory;
         _options = options.Value;
     }
 
@@ -33,19 +36,7 @@ public sealed class RabbitMqEventConsumer : BackgroundService
         _topologyBootstrapper.EnsureTopology(_logger);
         ExecutorLogMessages.WorkerStarted(_logger);
 
-        var factory = new ConnectionFactory
-        {
-            HostName = _options.HostName,
-            Port = _options.Port,
-            VirtualHost = _options.VirtualHost,
-            UserName = _options.UserName,
-            Password = _options.Password,
-            ClientProvidedName = _options.ClientProvidedName,
-            DispatchConsumersAsync = true,
-            AutomaticRecoveryEnabled = true,
-        };
-
-        using var connection = factory.CreateConnection(_options.ClientProvidedName);
+        using var connection = _connectionFactoryFactory.Create().CreateConnection(_options.ClientProvidedName);
         using var channel = connection.CreateModel();
         channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 

@@ -16,9 +16,10 @@ public sealed class OrderCreatedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);
@@ -46,9 +47,10 @@ public sealed class OrderCreatedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(null, new InvalidOperationException("boom"));
         var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy);
 
@@ -70,9 +72,10 @@ public sealed class OrderCreatedHandlerTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient(
             new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{\"ok\":true}"),
             null);

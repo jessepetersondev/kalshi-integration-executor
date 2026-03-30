@@ -17,9 +17,10 @@ public sealed class EventDispatcherTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
             new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy),
@@ -38,9 +39,10 @@ public sealed class EventDispatcherTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
             new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy),
@@ -59,9 +61,10 @@ public sealed class EventDispatcherTests
         var publisher = new InMemoryResultEventPublisher();
         var consumedStore = new InMemoryConsumedEventStore();
         var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
         var deadLetterPublisher = new RecordingDeadLetterPublisher();
         var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
-        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher);
+        var policy = new ExecutionReliabilityPolicy(Options.Create(new FailureHandlingOptions()), deadLetterPublisher, deadLetterStore);
         var client = new StubKalshiExecutionClient();
         var dispatcher = new EventDispatcher(
             new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy),

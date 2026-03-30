@@ -8,6 +8,7 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Routing;
+using Kalshi.Integration.Executor.Diagnostics;
 
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -27,23 +28,11 @@ builder.Services
 builder.Services
     .AddOptions<KalshiApiOptions>()
     .Bind(builder.Configuration.GetSection(KalshiApiOptions.SectionName))
-    .PostConfigure(options =>
-    {
-        if (string.IsNullOrWhiteSpace(options.PrivateKeyPem) && !string.IsNullOrWhiteSpace(options.PrivateKeyPath))
-        {
-            var fullPath = Path.IsPathRooted(options.PrivateKeyPath)
-                ? options.PrivateKeyPath
-                : Path.Combine(builder.Environment.ContentRootPath, options.PrivateKeyPath);
-            if (File.Exists(fullPath))
-            {
-                options.PrivateKeyPem = File.ReadAllText(fullPath);
-            }
-        }
-    })
     .ValidateDataAnnotations()
-    .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _), $"{KalshiApiOptions.SectionName}:BaseUrl must be an absolute URL.")
-    .Validate(options => !string.IsNullOrWhiteSpace(options.PrivateKeyPem), $"{KalshiApiOptions.SectionName}:PrivateKeyPem or readable PrivateKeyPath must be configured.")
     .ValidateOnStart();
+
+builder.Services.AddSingleton<IPostConfigureOptions<KalshiApiOptions>, KalshiApiOptionsPostConfigure>();
+builder.Services.AddSingleton<IValidateOptions<KalshiApiOptions>, KalshiApiOptionsValidator>();
 
 builder.Services
     .AddOptions<FailureHandlingOptions>()
@@ -65,15 +54,19 @@ builder.Services
 
 var kalshiApiOptions = builder.Configuration.GetSection(KalshiApiOptions.SectionName).Get<KalshiApiOptions>() ?? new KalshiApiOptions();
 
+builder.Services.AddSingleton<RabbitMqConnectionFactoryFactory>();
 builder.Services.AddSingleton<RabbitMqTopologyBootstrapper>();
 builder.Services.AddSingleton<IEventRouter, EventRouter>();
 builder.Services.AddSingleton<IEventDispatcher, EventDispatcher>();
+builder.Services.AddSingleton<IInboundEventPublisher, RabbitMqInboundEventPublisher>();
 builder.Services.AddSingleton<IResultEventPublisher, RabbitMqResultEventPublisher>();
 builder.Services.AddSingleton<IConsumedEventStore, SqliteConsumedEventStore>();
 builder.Services.AddSingleton<IExecutionRecordStore, SqliteExecutionRecordStore>();
+builder.Services.AddSingleton<IDeadLetterRecordStore, SqliteDeadLetterRecordStore>();
 builder.Services.AddSingleton<IExecutionRiskGuard, ExecutionRiskGuard>();
 builder.Services.AddSingleton<IDeadLetterEventPublisher, DeadLetterEventPublisher>();
 builder.Services.AddSingleton<ExecutionReliabilityPolicy>();
+builder.Services.AddSingleton<DeadLetterReplayService>();
 builder.Services.AddTransient<OrderCreatedHandler>();
 builder.Services.AddTransient<TradeIntentCreatedHandler>();
 builder.Services.AddTransient<ExecutionUpdateAppliedHandler>();
@@ -92,7 +85,13 @@ builder.Services.AddHttpClient<IKalshiExecutionClient, KalshiExecutionClient>((s
 
 builder.Services.AddHostedService<RabbitMqEventConsumer>();
 
-var host = builder.Build();
+using var host = builder.Build();
+
+if (await ExecutorCliRunner.TryRunAsync(args, host.Services, Console.Out, CancellationToken.None))
+{
+    return;
+}
+
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 var options = host.Services.GetRequiredService<IOptions<ExecutorOptions>>().Value;
 ExecutorLogMessages.Startup(
@@ -101,4 +100,4 @@ ExecutorLogMessages.Startup(
     options.Mode,
     host.Services.GetRequiredService<IHostEnvironment>().EnvironmentName);
 
-host.Run();
+await host.RunAsync();
