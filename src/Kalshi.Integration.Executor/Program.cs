@@ -10,7 +10,8 @@ using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Routing;
 using Kalshi.Integration.Executor.Diagnostics;
 
-
+// Wire the executor as a generic host so the same process can run either as
+// the long-lived RabbitMQ worker or as the DLQ diagnostics CLI.
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services

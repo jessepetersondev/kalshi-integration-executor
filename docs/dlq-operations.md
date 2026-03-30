@@ -48,3 +48,10 @@ Each dead-letter record captures:
 5. verify a new result event or execution record is produced
 
 Replays publish the **original inbound event payload** back to the executor exchange, so the standard idempotency and risk-control path still applies.
+
+## Visibility notes
+
+If you inspect RabbitMQ through the management UI after a replay test, keep in mind:
+- replayed messages may be consumed immediately by the worker
+- result messages may also be consumed by automation if you are using the committed smoke harness
+- an empty queue after success is normal and usually means the worker drained it, not that replay failed

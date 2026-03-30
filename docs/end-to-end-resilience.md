@@ -23,6 +23,13 @@ cd /home/ai/clawd/projects/kalshi-integration-executor
 python3 scripts/run-live-smoke.py
 ```
 
+When inspecting RabbitMQ after a run, remember that the harness is intentionally destructive/ephemeral for repeatability:
+- queues are purged before the scenario starts
+- messages are pulled back out of RabbitMQ to assert the final event set
+- the compose cleanup tears the broker down with volumes removed
+
+So a successful run does not leave a persistent message backlog behind for later UI inspection unless you modify the cleanup behavior.
+
 ## Important test classes
 
 - `ExecutorEndToEndResilienceTests`

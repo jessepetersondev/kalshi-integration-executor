@@ -4,6 +4,10 @@ using Kalshi.Integration.Executor.Messaging;
 
 namespace Kalshi.Integration.Executor;
 
+/// <summary>
+/// Minimal hosted worker used to keep the process alive after bootstrapping topology.
+/// The actual message consumption path lives in <see cref="RabbitMqEventConsumer"/>.
+/// </summary>
 public sealed class ExecutorWorker : BackgroundService
 {
     private readonly ILogger<ExecutorWorker> _logger;

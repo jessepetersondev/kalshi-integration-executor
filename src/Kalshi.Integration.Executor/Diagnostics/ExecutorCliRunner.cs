@@ -3,6 +3,10 @@ using System.Text.Json;
 
 namespace Kalshi.Integration.Executor.Diagnostics;
 
+/// <summary>
+/// Handles lightweight operational commands that reuse the production DI graph
+/// instead of maintaining a separate standalone CLI application.
+/// </summary>
 public static class ExecutorCliRunner
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)

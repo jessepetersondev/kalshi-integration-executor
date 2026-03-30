@@ -138,6 +138,11 @@ bash scripts/run-end-to-end-suite.sh
 
 This committed smoke harness stands up RabbitMQ, runs the real worker against a mock Kalshi API, validates DLQ persistence + replay, and checks duplicate suppression.
 
+Important behavior:
+- the harness purges the executor queues before each run so counts are deterministic
+- the harness consumes result/DLQ messages as part of verification
+- cleanup currently runs `docker compose down -v`, so the RabbitMQ broker state is intentionally ephemeral after the harness exits
+
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
 python3 scripts/run-live-smoke.py

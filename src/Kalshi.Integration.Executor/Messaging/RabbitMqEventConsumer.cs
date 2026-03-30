@@ -9,6 +9,10 @@ using Kalshi.Integration.Executor.Routing;
 
 namespace Kalshi.Integration.Executor.Messaging;
 
+/// <summary>
+/// Consumes inbound executor work from RabbitMQ, routes envelopes to the matching
+/// handler, and acknowledges only after the dispatch pipeline completes.
+/// </summary>
 public sealed class RabbitMqEventConsumer : BackgroundService
 {
     private readonly ILogger<RabbitMqEventConsumer> _logger;
