@@ -44,7 +44,7 @@ stages:
               -p:NuGetAuditLevel=high
             displayName: Restore .NET solution and audit NuGet dependencies
 
-          - script: dotnet format "$(Solution)" --verify-no-changes --no-restore
+          - script: dotnet format "$(Solution)" --verify-no-changes
             displayName: Verify .NET formatting
 
           - script: dotnet build "$(Solution)" --configuration $(BuildConfiguration) --no-restore -p:ContinuousIntegrationBuild=true
