@@ -1,10 +1,8 @@
 namespace Kalshi.Integration.Executor.Persistence;
 
 /// <summary>
-/// Provides storage operations for i execution record.
+/// Persists execution outcomes for diagnostics and risk evaluation.
 /// </summary>
-
-
 public interface IExecutionRecordStore
 {
     Task UpsertAsync(ExecutionRecord record, CancellationToken cancellationToken = default);

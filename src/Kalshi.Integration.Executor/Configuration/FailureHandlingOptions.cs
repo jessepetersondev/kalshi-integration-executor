@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.Configuration;
 
 /// <summary>
-/// Represents configuration for failure handling.
+/// Configures retry behavior and dead-letter handling for failed executions.
 /// </summary>
-
-
 public sealed class FailureHandlingOptions
 {
     public const string SectionName = "FailureHandling";

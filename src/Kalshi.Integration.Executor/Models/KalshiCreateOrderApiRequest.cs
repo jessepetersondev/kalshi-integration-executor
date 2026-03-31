@@ -5,8 +5,6 @@ namespace Kalshi.Integration.Executor.KalshiApi;
 /// <summary>
 /// Represents a request payload for kalshi create order api.
 /// </summary>
-
-
 public sealed class KalshiCreateOrderApiRequest
 {
     [JsonPropertyName("ticker")]

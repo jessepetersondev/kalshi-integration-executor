@@ -5,10 +5,8 @@ using System.Text;
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 /// <summary>
-/// Represents kalshi request signer.
+/// Signs Kalshi API requests with the configured access key and private key material.
 /// </summary>
-
-
 public sealed class KalshiRequestSigner
 {
     private readonly KalshiApiOptions _options;

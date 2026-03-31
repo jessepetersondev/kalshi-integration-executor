@@ -3,10 +3,8 @@ using Kalshi.Integration.Executor.KalshiApi;
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 /// <summary>
-/// Provides access to i kalshi execution.
+/// Defines the outbound Kalshi order-management operations required by the executor.
 /// </summary>
-
-
 public interface IKalshiExecutionClient
 {
     Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default);

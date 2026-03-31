@@ -7,8 +7,6 @@ namespace Kalshi.Integration.Executor.Persistence;
 /// <summary>
 /// Provides storage operations for sqlite consumed event.
 /// </summary>
-
-
 public sealed class SqliteConsumedEventStore : IConsumedEventStore
 {
     private readonly string _connectionString;

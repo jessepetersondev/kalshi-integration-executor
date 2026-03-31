@@ -1,10 +1,8 @@
 namespace Kalshi.Integration.Executor.Persistence;
 
 /// <summary>
-/// Provides storage operations for i consumed event.
+/// Persists consumed event identifiers so duplicate inbound messages can be ignored safely.
 /// </summary>
-
-
 public interface IConsumedEventStore
 {
     Task<bool> HasProcessedAsync(string eventKey, CancellationToken cancellationToken = default);

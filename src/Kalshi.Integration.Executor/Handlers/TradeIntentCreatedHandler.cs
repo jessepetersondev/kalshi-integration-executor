@@ -8,8 +8,6 @@ namespace Kalshi.Integration.Executor.Handlers;
 /// <summary>
 /// Handles trade intent created events.
 /// </summary>
-
-
 public sealed class TradeIntentCreatedHandler
 {
     private readonly IKalshiExecutionClient _kalshiExecutionClient;

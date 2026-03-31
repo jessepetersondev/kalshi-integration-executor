@@ -3,8 +3,6 @@ namespace Kalshi.Integration.Executor.Messaging;
 /// <summary>
 /// Publishes in memory result event.
 /// </summary>
-
-
 public sealed class InMemoryResultEventPublisher : IResultEventPublisher
 {
     private readonly List<ApplicationEventEnvelope> _publishedEvents = [];

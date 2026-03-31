@@ -5,10 +5,8 @@ using Kalshi.Integration.Executor.Logging;
 namespace Kalshi.Integration.Executor.Messaging;
 
 /// <summary>
-/// Represents rabbit mq topology bootstrapper.
+/// Ensures the executor RabbitMQ exchanges and queues exist before message processing starts.
 /// </summary>
-
-
 public sealed class RabbitMqTopologyBootstrapper
 {
     private readonly RabbitMqConnectionFactoryFactory _connectionFactoryFactory;

@@ -19,6 +19,12 @@ public sealed class ExecutionReliabilityPolicy
     private readonly IDeadLetterEventPublisher _deadLetterEventPublisher;
     private readonly IDeadLetterRecordStore _deadLetterRecordStore;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExecutionReliabilityPolicy"/> class.
+    /// </summary>
+    /// <param name="options">The configured retry and dead-letter settings.</param>
+    /// <param name="deadLetterEventPublisher">The publisher used to emit dead-letter notifications.</param>
+    /// <param name="deadLetterRecordStore">The store used to persist dead-letter records.</param>
     public ExecutionReliabilityPolicy(
         IOptions<FailureHandlingOptions> options,
         IDeadLetterEventPublisher deadLetterEventPublisher,

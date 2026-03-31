@@ -5,8 +5,6 @@ namespace Kalshi.Integration.Executor.KalshiApi;
 /// <summary>
 /// Parses kalshi order response values.
 /// </summary>
-
-
 public static class KalshiOrderResponseParser
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);

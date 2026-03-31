@@ -3,8 +3,6 @@ namespace Kalshi.Integration.Executor.Persistence;
 /// <summary>
 /// Represents a recorded dead letter entry.
 /// </summary>
-
-
 public sealed record DeadLetterRecord(
     Guid Id,
     Guid SourceEventId,

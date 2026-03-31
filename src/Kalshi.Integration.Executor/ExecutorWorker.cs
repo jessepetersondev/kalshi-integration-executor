@@ -12,6 +12,11 @@ public sealed class ExecutorWorker : BackgroundService
     private readonly ILogger<ExecutorWorker> _logger;
     private readonly RabbitMqTopologyBootstrapper _topologyBootstrapper;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExecutorWorker"/> class.
+    /// </summary>
+    /// <param name="logger">The logger for worker lifecycle events.</param>
+    /// <param name="topologyBootstrapper">The bootstrapper that ensures RabbitMQ topology exists.</param>
     public ExecutorWorker(ILogger<ExecutorWorker> logger, RabbitMqTopologyBootstrapper topologyBootstrapper)
     {
         _logger = logger;

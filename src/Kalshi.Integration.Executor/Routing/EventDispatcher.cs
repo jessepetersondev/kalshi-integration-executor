@@ -3,16 +3,20 @@ using Kalshi.Integration.Executor.Handlers;
 namespace Kalshi.Integration.Executor.Routing;
 
 /// <summary>
-/// Represents event dispatcher.
+/// Dispatches routed application events to the concrete executor handler responsible for each route.
 /// </summary>
-
-
 public sealed class EventDispatcher : IEventDispatcher
 {
     private readonly OrderCreatedHandler _orderCreatedHandler;
     private readonly TradeIntentCreatedHandler _tradeIntentCreatedHandler;
     private readonly ExecutionUpdateAppliedHandler _executionUpdateAppliedHandler;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventDispatcher"/> class.
+    /// </summary>
+    /// <param name="orderCreatedHandler">The handler for order-created events.</param>
+    /// <param name="tradeIntentCreatedHandler">The handler for trade-intent-created events.</param>
+    /// <param name="executionUpdateAppliedHandler">The handler for execution-update-applied events.</param>
     public EventDispatcher(
         OrderCreatedHandler orderCreatedHandler,
         TradeIntentCreatedHandler tradeIntentCreatedHandler,

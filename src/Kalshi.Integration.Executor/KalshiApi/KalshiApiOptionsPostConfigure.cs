@@ -6,8 +6,6 @@ namespace Kalshi.Integration.Executor.KalshiApi;
 /// <summary>
 /// Applies post-configuration defaults for kalshi api options.
 /// </summary>
-
-
 public sealed class KalshiApiOptionsPostConfigure : IPostConfigureOptions<KalshiApiOptions>
 {
     private readonly IHostEnvironment _hostEnvironment;

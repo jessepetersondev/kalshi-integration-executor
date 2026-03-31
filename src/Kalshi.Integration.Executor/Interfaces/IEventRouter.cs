@@ -1,10 +1,8 @@
 namespace Kalshi.Integration.Executor.Routing;
 
 /// <summary>
-/// Defines the contract for event router.
+/// Maps an inbound application event envelope to the executor route that should handle it.
 /// </summary>
-
-
 public interface IEventRouter
 {
     ExecutorRoutingResult Route(string payload);

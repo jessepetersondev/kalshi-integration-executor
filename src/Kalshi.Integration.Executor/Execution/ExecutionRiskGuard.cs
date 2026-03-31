@@ -6,15 +6,18 @@ using Microsoft.Extensions.Options;
 namespace Kalshi.Integration.Executor.Execution;
 
 /// <summary>
-/// Represents execution risk guard.
+/// Evaluates whether an outbound Kalshi order is allowed under the executor's configured risk controls.
 /// </summary>
-
-
 public sealed class ExecutionRiskGuard : IExecutionRiskGuard
 {
     private readonly RiskControlsOptions _options;
     private readonly IExecutionRecordStore _executionRecordStore;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExecutionRiskGuard"/> class.
+    /// </summary>
+    /// <param name="options">The configured execution risk controls.</param>
+    /// <param name="executionRecordStore">The store used to evaluate historical notional usage.</param>
     public ExecutionRiskGuard(IOptions<RiskControlsOptions> options, IExecutionRecordStore executionRecordStore)
     {
         _options = options.Value;

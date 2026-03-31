@@ -7,10 +7,8 @@ using Kalshi.Integration.Executor.Logging;
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 /// <summary>
-/// Provides access to kalshi execution.
+/// Wraps the Kalshi trading API endpoints used by the executor to place, cancel, and inspect orders.
 /// </summary>
-
-
 public sealed class KalshiExecutionClient : IKalshiExecutionClient
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -20,6 +18,12 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
     private readonly KalshiRequestSigner _requestSigner;
     private readonly ILogger<KalshiExecutionClient> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="KalshiExecutionClient"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client configured for Kalshi API requests.</param>
+    /// <param name="options">The Kalshi API configuration options.</param>
+    /// <param name="logger">The logger for API call telemetry.</param>
     public KalshiExecutionClient(HttpClient httpClient, IOptions<KalshiApiOptions> options, ILogger<KalshiExecutionClient> logger)
     {
         _httpClient = httpClient;

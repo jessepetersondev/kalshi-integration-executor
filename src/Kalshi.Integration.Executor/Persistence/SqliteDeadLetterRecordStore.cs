@@ -8,8 +8,6 @@ namespace Kalshi.Integration.Executor.Persistence;
 /// <summary>
 /// Provides storage operations for sqlite dead letter record.
 /// </summary>
-
-
 public sealed class SqliteDeadLetterRecordStore : IDeadLetterRecordStore
 {
     private readonly string _connectionString;

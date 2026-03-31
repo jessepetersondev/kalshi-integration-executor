@@ -5,10 +5,8 @@ using Kalshi.Integration.Executor.Persistence;
 namespace Kalshi.Integration.Executor.Diagnostics;
 
 /// <summary>
-/// Coordinates dead letter replay operations.
+/// Lists and replays dead-lettered events back onto the inbound pipeline after operator review.
 /// </summary>
-
-
 public sealed class DeadLetterReplayService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -16,6 +14,11 @@ public sealed class DeadLetterReplayService
     private readonly IDeadLetterRecordStore _deadLetterRecordStore;
     private readonly IInboundEventPublisher _inboundEventPublisher;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeadLetterReplayService"/> class.
+    /// </summary>
+    /// <param name="deadLetterRecordStore">The store containing dead-letter records.</param>
+    /// <param name="inboundEventPublisher">The publisher used to requeue the original event payload.</param>
     public DeadLetterReplayService(IDeadLetterRecordStore deadLetterRecordStore, IInboundEventPublisher inboundEventPublisher)
     {
         _deadLetterRecordStore = deadLetterRecordStore;

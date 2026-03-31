@@ -8,8 +8,6 @@ namespace Kalshi.Integration.Executor.Handlers;
 /// <summary>
 /// Handles order created events.
 /// </summary>
-
-
 public sealed class OrderCreatedHandler
 {
     private readonly IKalshiExecutionClient _kalshiExecutionClient;

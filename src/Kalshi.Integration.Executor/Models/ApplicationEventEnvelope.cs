@@ -3,10 +3,8 @@ using System.Text.Json.Serialization;
 namespace Kalshi.Integration.Executor.Messaging;
 
 /// <summary>
-/// Represents application event envelope.
+/// Represents the normalized application event payload consumed by the executor.
 /// </summary>
-
-
 public sealed record ApplicationEventEnvelope(
     [property: JsonPropertyName("id")] Guid Id,
     [property: JsonPropertyName("category")] string Category,

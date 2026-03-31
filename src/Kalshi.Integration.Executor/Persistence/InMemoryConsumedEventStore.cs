@@ -3,8 +3,6 @@ namespace Kalshi.Integration.Executor.Persistence;
 /// <summary>
 /// Provides storage operations for in memory consumed event.
 /// </summary>
-
-
 public sealed class InMemoryConsumedEventStore : IConsumedEventStore
 {
     private readonly HashSet<string> _processedKeys = [];

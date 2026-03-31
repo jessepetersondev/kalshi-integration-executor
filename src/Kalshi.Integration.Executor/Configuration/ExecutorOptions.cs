@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.Configuration;
 
 /// <summary>
-/// Represents configuration for executor.
+/// Defines the top-level configuration for the executor host and its processing pipeline.
 /// </summary>
-
-
 public sealed class ExecutorOptions
 {
     public const string SectionName = "Executor";

@@ -1,10 +1,8 @@
 namespace Kalshi.Integration.Executor.Execution;
 
 /// <summary>
-/// Represents the outcome of execution risk evaluation.
+/// Captures whether an order request was allowed and, if not, why it was blocked.
 /// </summary>
-
-
 public sealed record ExecutionRiskDecision(bool IsAllowed, string? Code = null, string? Reason = null)
 {
     public static ExecutionRiskDecision Allow() => new(true);

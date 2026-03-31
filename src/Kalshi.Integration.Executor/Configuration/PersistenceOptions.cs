@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.Configuration;
 
 /// <summary>
-/// Represents configuration for persistence.
+/// Configures the persistence store used for execution history and dead-letter records.
 /// </summary>
-
-
 public sealed class PersistenceOptions
 {
     public const string SectionName = "Persistence";

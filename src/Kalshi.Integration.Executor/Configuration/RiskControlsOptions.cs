@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.Configuration;
 
 /// <summary>
-/// Represents configuration for risk controls.
+/// Defines the guardrails that determine whether the executor is allowed to place a live order.
 /// </summary>
-
-
 public sealed class RiskControlsOptions
 {
     public const string SectionName = "RiskControls";

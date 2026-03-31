@@ -3,8 +3,6 @@ namespace Kalshi.Integration.Executor.Persistence;
 /// <summary>
 /// Provides storage operations for in memory dead letter record.
 /// </summary>
-
-
 public sealed class InMemoryDeadLetterRecordStore : IDeadLetterRecordStore
 {
     private readonly Dictionary<Guid, DeadLetterRecord> _records = [];

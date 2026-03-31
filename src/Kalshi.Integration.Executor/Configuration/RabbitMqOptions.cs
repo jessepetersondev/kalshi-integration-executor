@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.Configuration;
 
 /// <summary>
-/// Represents configuration for rabbit mq.
+/// Configures the RabbitMQ exchanges, queues, and connection settings used by the executor.
 /// </summary>
-
-
 public sealed class RabbitMqOptions
 {
     public const string SectionName = "RabbitMq";

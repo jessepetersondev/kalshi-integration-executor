@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Kalshi.Integration.Executor.KalshiApi;
 
 /// <summary>
-/// Represents configuration for kalshi api.
+/// Configures authentication and request behavior for the Kalshi trading API.
 /// </summary>
-
-
 public sealed class KalshiApiOptions
 {
     public const string SectionName = "Integrations:KalshiApi";

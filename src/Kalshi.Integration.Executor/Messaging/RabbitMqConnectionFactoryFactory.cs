@@ -7,8 +7,6 @@ namespace Kalshi.Integration.Executor.Messaging;
 /// <summary>
 /// Creates rabbit mq connection factory instances.
 /// </summary>
-
-
 public sealed class RabbitMqConnectionFactoryFactory
 {
     private readonly RabbitMqOptions _options;

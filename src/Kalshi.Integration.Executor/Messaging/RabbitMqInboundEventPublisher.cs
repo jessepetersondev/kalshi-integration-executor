@@ -9,8 +9,6 @@ namespace Kalshi.Integration.Executor.Messaging;
 /// <summary>
 /// Publishes rabbit mq inbound event.
 /// </summary>
-
-
 public sealed class RabbitMqInboundEventPublisher : IInboundEventPublisher
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);

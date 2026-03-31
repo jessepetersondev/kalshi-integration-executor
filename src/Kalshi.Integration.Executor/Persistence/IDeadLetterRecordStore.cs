@@ -1,10 +1,8 @@
 namespace Kalshi.Integration.Executor.Persistence;
 
 /// <summary>
-/// Provides storage operations for i dead letter record.
+/// Persists dead-letter records and their replay metadata.
 /// </summary>
-
-
 public interface IDeadLetterRecordStore
 {
     Task AddAsync(DeadLetterRecord record, CancellationToken cancellationToken = default);
