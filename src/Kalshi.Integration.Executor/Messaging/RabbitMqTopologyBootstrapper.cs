@@ -2,6 +2,10 @@ using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Logging;
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Represents rabbit mq topology bootstrapper.
+/// </summary>
+
 
 public sealed class RabbitMqTopologyBootstrapper
 {

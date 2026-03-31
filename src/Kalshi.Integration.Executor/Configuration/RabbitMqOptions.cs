@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 
 namespace Kalshi.Integration.Executor.Configuration;
+/// <summary>
+/// Represents configuration for rabbit mq.
+/// </summary>
+
 
 public sealed class RabbitMqOptions
 {

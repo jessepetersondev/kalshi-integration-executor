@@ -4,6 +4,10 @@ using Kalshi.Integration.Executor.Configuration;
 
 
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Publishes rabbit mq result event.
+/// </summary>
+
 
 public sealed class RabbitMqResultEventPublisher : IResultEventPublisher
 {

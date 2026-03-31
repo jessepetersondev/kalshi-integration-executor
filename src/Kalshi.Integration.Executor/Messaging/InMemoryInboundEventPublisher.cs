@@ -1,6 +1,10 @@
 using System.Text.Json;
 
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Publishes in memory inbound event.
+/// </summary>
+
 
 public sealed class InMemoryInboundEventPublisher : IInboundEventPublisher
 {

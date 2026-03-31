@@ -5,6 +5,10 @@ using Kalshi.Integration.Executor.Persistence;
 
 
 namespace Kalshi.Integration.Executor.Handlers;
+/// <summary>
+/// Handles execution update applied events.
+/// </summary>
+
 
 public sealed class ExecutionUpdateAppliedHandler
 {

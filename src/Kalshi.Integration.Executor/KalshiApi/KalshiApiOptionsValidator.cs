@@ -2,6 +2,10 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Validates kalshi api options configuration values.
+/// </summary>
+
 
 public sealed class KalshiApiOptionsValidator : IValidateOptions<KalshiApiOptions>
 {

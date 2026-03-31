@@ -1,4 +1,8 @@
 namespace Kalshi.Integration.Executor.Routing;
+/// <summary>
+/// Represents an error related to unsupported event.
+/// </summary>
+
 
 public sealed class UnsupportedEventException : InvalidOperationException
 {

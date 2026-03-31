@@ -1,4 +1,8 @@
 namespace Kalshi.Integration.Executor.Persistence;
+/// <summary>
+/// Provides storage operations for i dead letter record.
+/// </summary>
+
 
 public interface IDeadLetterRecordStore
 {

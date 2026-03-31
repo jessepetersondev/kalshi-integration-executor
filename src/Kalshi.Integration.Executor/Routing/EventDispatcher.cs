@@ -2,6 +2,10 @@ using Kalshi.Integration.Executor.Handlers;
 
 
 namespace Kalshi.Integration.Executor.Routing;
+/// <summary>
+/// Represents event dispatcher.
+/// </summary>
+
 
 public sealed class EventDispatcher : IEventDispatcher
 {

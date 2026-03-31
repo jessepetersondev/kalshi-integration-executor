@@ -2,6 +2,10 @@ using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Applies post-configuration defaults for kalshi api options.
+/// </summary>
+
 
 public sealed class KalshiApiOptionsPostConfigure : IPostConfigureOptions<KalshiApiOptions>
 {

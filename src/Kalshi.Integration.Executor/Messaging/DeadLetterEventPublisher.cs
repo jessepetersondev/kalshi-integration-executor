@@ -4,6 +4,10 @@ using Kalshi.Integration.Executor.Configuration;
 
 
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Publishes dead letter event.
+/// </summary>
+
 
 public sealed class DeadLetterEventPublisher : IDeadLetterEventPublisher
 {

@@ -6,6 +6,10 @@ using Kalshi.Integration.Executor.Logging;
 
 
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Provides access to kalshi execution.
+/// </summary>
+
 
 public sealed class KalshiExecutionClient : IKalshiExecutionClient
 {

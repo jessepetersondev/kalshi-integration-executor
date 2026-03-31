@@ -4,6 +4,10 @@ using System.Text;
 
 
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Represents kalshi request signer.
+/// </summary>
+
 
 public sealed class KalshiRequestSigner
 {

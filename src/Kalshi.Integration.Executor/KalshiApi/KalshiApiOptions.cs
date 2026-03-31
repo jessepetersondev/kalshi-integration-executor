@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Represents configuration for kalshi api.
+/// </summary>
+
 
 public sealed class KalshiApiOptions
 {

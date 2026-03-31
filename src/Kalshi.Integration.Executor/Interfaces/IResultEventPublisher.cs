@@ -1,5 +1,9 @@
 
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Publishes i result event.
+/// </summary>
+
 
 public interface IResultEventPublisher
 {

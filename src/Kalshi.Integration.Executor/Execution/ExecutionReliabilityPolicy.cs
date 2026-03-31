@@ -7,7 +7,10 @@ using Kalshi.Integration.Executor.Persistence;
 
 
 namespace Kalshi.Integration.Executor.Execution;
-
+/// <summary>
+/// Executes outbound processing with bounded retries and publishes terminal failures
+/// to the configured dead-letter queue when the retry budget is exhausted.
+/// </summary>
 public sealed class ExecutionReliabilityPolicy
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);

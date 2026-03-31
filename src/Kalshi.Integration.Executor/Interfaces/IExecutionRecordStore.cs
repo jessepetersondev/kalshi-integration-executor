@@ -1,5 +1,9 @@
 
 namespace Kalshi.Integration.Executor.Persistence;
+/// <summary>
+/// Provides storage operations for i execution record.
+/// </summary>
+
 
 public interface IExecutionRecordStore
 {

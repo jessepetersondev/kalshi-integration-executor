@@ -1,4 +1,8 @@
 namespace Kalshi.Integration.Executor.Persistence;
+/// <summary>
+/// Represents a recorded execution entry.
+/// </summary>
+
 
 public sealed record ExecutionRecord(
     string ExternalOrderId,

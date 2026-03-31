@@ -3,7 +3,10 @@ using Kalshi.Integration.Executor.Messaging;
 
 
 namespace Kalshi.Integration.Executor.Routing;
-
+/// <summary>
+/// Deserializes inbound event payloads and maps each envelope to the executor route
+/// that should handle it.
+/// </summary>
 public sealed class EventRouter : IEventRouter
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);

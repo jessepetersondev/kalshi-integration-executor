@@ -1,4 +1,8 @@
 namespace Kalshi.Integration.Executor.KalshiApi;
+/// <summary>
+/// Represents a request payload for kalshi order.
+/// </summary>
+
 
 public sealed record KalshiOrderRequest(
     string MarketTicker,

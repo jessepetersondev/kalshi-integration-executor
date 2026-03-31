@@ -5,6 +5,10 @@ using Kalshi.Integration.Executor.Configuration;
 
 
 namespace Kalshi.Integration.Executor.Persistence;
+/// <summary>
+/// Provides storage operations for sqlite execution record.
+/// </summary>
+
 
 public sealed class SqliteExecutionRecordStore : IExecutionRecordStore
 {

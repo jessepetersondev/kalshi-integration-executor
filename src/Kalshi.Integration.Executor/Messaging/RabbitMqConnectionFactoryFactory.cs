@@ -3,6 +3,10 @@ using Kalshi.Integration.Executor.Configuration;
 using RabbitMQ.Client;
 
 namespace Kalshi.Integration.Executor.Messaging;
+/// <summary>
+/// Creates rabbit mq connection factory instances.
+/// </summary>
+
 
 public sealed class RabbitMqConnectionFactoryFactory
 {
