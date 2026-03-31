@@ -1,4 +1,5 @@
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Represents a snapshot of kalshi order state.
 /// </summary>

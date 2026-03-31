@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 
-
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Represents a request payload for kalshi create order api.
 /// </summary>

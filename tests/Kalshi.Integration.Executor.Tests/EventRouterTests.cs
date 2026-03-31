@@ -1,8 +1,6 @@
 using System.Text.Json;
 using Kalshi.Integration.Executor.Routing;
 
-
-
 namespace Kalshi.Integration.Executor.Tests;
 
 public sealed class EventRouterTests

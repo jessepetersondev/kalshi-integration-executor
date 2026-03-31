@@ -4,6 +4,7 @@ using Kalshi.Integration.Executor.Persistence;
 using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Execution;
+
 /// <summary>
 /// Represents execution risk guard.
 /// </summary>

@@ -2,8 +2,8 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Represents kalshi request signer.
 /// </summary>

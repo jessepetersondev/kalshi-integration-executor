@@ -3,6 +3,7 @@ using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
 namespace Kalshi.Integration.Executor.Diagnostics;
+
 /// <summary>
 /// Coordinates dead letter replay operations.
 /// </summary>

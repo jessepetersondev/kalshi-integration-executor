@@ -5,8 +5,8 @@ using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
-
 namespace Kalshi.Integration.Executor.Execution;
+
 /// <summary>
 /// Executes outbound processing with bounded retries and publishes terminal failures
 /// to the configured dead-letter queue when the retry budget is exhausted.

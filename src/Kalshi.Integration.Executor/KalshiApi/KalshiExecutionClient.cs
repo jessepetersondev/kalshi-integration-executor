@@ -4,8 +4,8 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Logging;
 
-
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Provides access to kalshi execution.
 /// </summary>

@@ -1,4 +1,5 @@
 namespace Kalshi.Integration.Executor.Execution;
+
 /// <summary>
 /// Represents the outcome of execution risk evaluation.
 /// </summary>

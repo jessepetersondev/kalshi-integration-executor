@@ -3,8 +3,8 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
-
 namespace Kalshi.Integration.Executor.Handlers;
+
 /// <summary>
 /// Handles trade intent created events.
 /// </summary>

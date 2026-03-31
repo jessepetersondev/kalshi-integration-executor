@@ -6,7 +6,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Kalshi.Integration.Executor.Routing;
 
-
 namespace Kalshi.Integration.Executor.Messaging;
 
 /// <summary>

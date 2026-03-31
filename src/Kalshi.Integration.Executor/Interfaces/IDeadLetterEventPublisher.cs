@@ -1,5 +1,5 @@
-
 namespace Kalshi.Integration.Executor.Messaging;
+
 /// <summary>
 /// Publishes i dead letter event.
 /// </summary>

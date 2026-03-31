@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using System.Globalization;
 using Kalshi.Integration.Executor.Configuration;
 
-
 namespace Kalshi.Integration.Executor.Persistence;
+
 /// <summary>
 /// Provides storage operations for sqlite execution record.
 /// </summary>

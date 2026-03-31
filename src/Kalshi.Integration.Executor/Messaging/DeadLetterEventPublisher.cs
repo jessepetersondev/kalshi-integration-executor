@@ -2,8 +2,8 @@ using System.Text;
 using System.Text.Json;
 using Kalshi.Integration.Executor.Configuration;
 
-
 namespace Kalshi.Integration.Executor.Messaging;
+
 /// <summary>
 /// Publishes dead letter event.
 /// </summary>

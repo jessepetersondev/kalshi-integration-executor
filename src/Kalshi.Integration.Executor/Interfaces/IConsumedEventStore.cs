@@ -1,5 +1,5 @@
-
 namespace Kalshi.Integration.Executor.Persistence;
+
 /// <summary>
 /// Provides storage operations for i consumed event.
 /// </summary>

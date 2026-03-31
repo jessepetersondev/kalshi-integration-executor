@@ -6,8 +6,6 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Messaging;
 
-
-
 namespace Kalshi.Integration.Executor.Tests;
 
 public sealed class ExecutionUpdateAppliedHandlerTests

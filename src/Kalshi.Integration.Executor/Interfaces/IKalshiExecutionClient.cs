@@ -1,7 +1,7 @@
 using Kalshi.Integration.Executor.KalshiApi;
 
-
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Provides access to i kalshi execution.
 /// </summary>

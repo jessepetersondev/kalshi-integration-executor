@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 
-
 namespace Kalshi.Integration.Executor.Messaging;
+
 /// <summary>
 /// Represents application event envelope.
 /// </summary>

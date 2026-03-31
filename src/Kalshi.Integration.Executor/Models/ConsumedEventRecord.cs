@@ -1,4 +1,5 @@
 namespace Kalshi.Integration.Executor.Persistence;
+
 /// <summary>
 /// Represents a recorded consumed event entry.
 /// </summary>

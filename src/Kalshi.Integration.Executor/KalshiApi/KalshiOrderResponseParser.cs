@@ -1,7 +1,7 @@
 using System.Text.Json;
 
-
 namespace Kalshi.Integration.Executor.KalshiApi;
+
 /// <summary>
 /// Parses kalshi order response values.
 /// </summary>

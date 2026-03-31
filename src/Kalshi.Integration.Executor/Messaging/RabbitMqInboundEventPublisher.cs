@@ -5,6 +5,7 @@ using Kalshi.Integration.Executor.Configuration;
 using RabbitMQ.Client;
 
 namespace Kalshi.Integration.Executor.Messaging;
+
 /// <summary>
 /// Publishes rabbit mq inbound event.
 /// </summary>

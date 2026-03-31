@@ -4,8 +4,6 @@ using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
-
-
 namespace Kalshi.Integration.Executor.Tests;
 
 public sealed class ExecutionReliabilityPolicyTests

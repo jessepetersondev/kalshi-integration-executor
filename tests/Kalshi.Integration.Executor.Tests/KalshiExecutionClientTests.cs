@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.KalshiApi;
 
-
-
 namespace Kalshi.Integration.Executor.Tests;
 
 public sealed class KalshiExecutionClientTests

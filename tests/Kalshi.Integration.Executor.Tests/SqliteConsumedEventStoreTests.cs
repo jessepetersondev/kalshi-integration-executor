@@ -2,8 +2,6 @@ using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Persistence;
 
-
-
 namespace Kalshi.Integration.Executor.Tests;
 
 public sealed class SqliteConsumedEventStoreTests

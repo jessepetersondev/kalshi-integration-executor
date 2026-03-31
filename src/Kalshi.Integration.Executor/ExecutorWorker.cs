@@ -1,7 +1,6 @@
 using Kalshi.Integration.Executor.Logging;
 using Kalshi.Integration.Executor.Messaging;
 
-
 namespace Kalshi.Integration.Executor;
 
 /// <summary>

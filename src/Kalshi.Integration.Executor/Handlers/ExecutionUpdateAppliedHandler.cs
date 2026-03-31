@@ -3,13 +3,11 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 
-
 namespace Kalshi.Integration.Executor.Handlers;
+
 /// <summary>
 /// Handles execution update applied events.
 /// </summary>
-
-
 public sealed class ExecutionUpdateAppliedHandler
 {
     private readonly IKalshiExecutionClient _kalshiExecutionClient;

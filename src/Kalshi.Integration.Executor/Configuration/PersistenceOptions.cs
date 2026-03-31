@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
-
 namespace Kalshi.Integration.Executor.Configuration;
+
 /// <summary>
 /// Represents configuration for persistence.
 /// </summary>
