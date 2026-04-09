@@ -51,8 +51,8 @@ public sealed class EventDispatcherTests
 
         await dispatcher.DispatchAsync(new ExecutorRoutingResult(ExecutorRoute.TradeIntentCreated, CreateEnvelope("trade-intent.created")));
 
-        var published = Assert.Single(publisher.PublishedEvents);
-        Assert.Equal("trade-intent.executed", published.Name);
+        Assert.Empty(publisher.PublishedEvents);
+        Assert.Single(consumedStore.Records);
     }
 
     [Fact]
@@ -108,8 +108,8 @@ public sealed class EventDispatcherTests
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new KalshiOrderResponse("ext-123", "client-123", "KXBTC", "yes", "buy", "accepted", "{}"));
 
-        public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("cancelled");
+        public Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KalshiOrderResponse(externalOrderId, externalOrderId, null, null, "cancel", "canceled", "{}"));
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-123\",\"ticker\":\"KXBTC\",\"side\":\"yes\",\"action\":\"buy\",\"status\":\"filled\"}}");

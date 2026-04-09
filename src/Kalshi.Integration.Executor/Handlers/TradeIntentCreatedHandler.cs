@@ -34,59 +34,6 @@ public sealed class TradeIntentCreatedHandler
         {
             return;
         }
-
-        var ticker = envelope.Attributes.TryGetValue("ticker", out var tickerValue) ? tickerValue ?? string.Empty : string.Empty;
-
-        await _executionReliabilityPolicy.ExecuteAsync(
-            envelope,
-            deadLetterQueue: "kalshi.integration.executor.dlq",
-            async token =>
-            {
-                try
-                {
-                    var market = await _kalshiExecutionClient.GetMarketAsync(ticker, token);
-                    var successEvent = new ApplicationEventEnvelope(
-                        Guid.NewGuid(),
-                        "executor",
-                        "trade-intent.executed",
-                        envelope.ResourceId,
-                        envelope.CorrelationId,
-                        envelope.IdempotencyKey,
-                        new Dictionary<string, string?>
-                        {
-                            ["ticker"] = ticker,
-                            ["market"] = market,
-                            ["sourceEvent"] = envelope.Name,
-                        },
-                        DateTimeOffset.UtcNow);
-
-                    await _resultEventPublisher.PublishAsync(successEvent, token);
-                    await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, token);
-                }
-                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or TimeoutException)
-                {
-                    throw;
-                }
-                catch (Exception exception)
-                {
-                    var failureEvent = new ApplicationEventEnvelope(
-                        Guid.NewGuid(),
-                        "executor",
-                        "trade-intent.failed",
-                        envelope.ResourceId,
-                        envelope.CorrelationId,
-                        envelope.IdempotencyKey,
-                        new Dictionary<string, string?>
-                        {
-                            ["errorType"] = exception.GetType().Name,
-                            ["errorMessage"] = exception.Message,
-                            ["sourceEvent"] = envelope.Name,
-                        },
-                        DateTimeOffset.UtcNow);
-
-                    await _resultEventPublisher.PublishAsync(failureEvent, token);
-                }
-            },
-            cancellationToken);
+        await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, cancellationToken);
     }
 }

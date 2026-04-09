@@ -241,8 +241,8 @@ public sealed class ExecutorEndToEndResilienceTests
                 "{\"status\":\"accepted\"}"));
         }
 
-        public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("cancelled");
+        public Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KalshiOrderResponse(externalOrderId, externalOrderId, null, null, "cancel", "canceled", "{}"));
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("{\"order\":{\"order_id\":\"ext-123\",\"client_order_id\":\"client-1\",\"ticker\":\"KXBTC\",\"side\":\"no\",\"action\":\"buy\",\"status\":\"filled\"}}");

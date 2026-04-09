@@ -10,4 +10,8 @@ public sealed record KalshiOrderRequest(
     decimal LimitPrice,
     string ClientOrderId,
     string Action = "buy",
-    bool ReduceOnly = false);
+    bool ReduceOnly = false,
+    string? ActionType = null,
+    string? TargetPublisherOrderId = null,
+    string? TargetClientOrderId = null,
+    string? TargetExternalOrderId = null);

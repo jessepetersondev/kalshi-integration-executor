@@ -38,7 +38,7 @@ public sealed class ExecutionReliabilityPolicy
     public async Task ExecuteAsync(
         ApplicationEventEnvelope envelope,
         string deadLetterQueue,
-        Func<CancellationToken, Task> operation,
+        Func<int, CancellationToken, Task> operation,
         CancellationToken cancellationToken = default)
     {
         Exception? lastException = null;
@@ -50,7 +50,7 @@ public sealed class ExecutionReliabilityPolicy
 
             try
             {
-                await operation(cancellationToken);
+                await operation(attemptCount, cancellationToken);
                 return;
             }
             catch (Exception exception) when (IsRetryable(exception))
@@ -104,6 +104,10 @@ public sealed class ExecutionReliabilityPolicy
                 ["sourceEventId"] = envelope.Id.ToString(),
                 ["sourceCategory"] = envelope.Category,
                 ["sourceEvent"] = envelope.Name,
+                ["commandEventId"] = envelope.Id.ToString(),
+                ["tradeIntentId"] = envelope.Attributes.TryGetValue("tradeIntentId", out var tradeIntentId) ? tradeIntentId : null,
+                ["publisherOrderId"] = envelope.Attributes.TryGetValue("publisherOrderId", out var publisherOrderId) ? publisherOrderId : envelope.ResourceId,
+                ["actionType"] = envelope.Attributes.TryGetValue("actionType", out var actionType) ? actionType : null,
                 ["deadLetterQueue"] = deadLetterQueue,
                 ["attemptCount"] = attemptCount.ToString(CultureInfo.InvariantCulture),
                 ["errorType"] = lastException?.GetType().Name,
@@ -112,6 +116,19 @@ public sealed class ExecutionReliabilityPolicy
             DateTimeOffset.UtcNow);
 
         await _deadLetterEventPublisher.PublishAsync(deadLetterEnvelope, deadLetterQueue, cancellationToken);
+    }
+
+    public Task ExecuteAsync(
+        ApplicationEventEnvelope envelope,
+        string deadLetterQueue,
+        Func<CancellationToken, Task> operation,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            envelope,
+            deadLetterQueue,
+            (_, token) => operation(token),
+            cancellationToken);
     }
 
     private static bool IsRetryable(Exception exception)

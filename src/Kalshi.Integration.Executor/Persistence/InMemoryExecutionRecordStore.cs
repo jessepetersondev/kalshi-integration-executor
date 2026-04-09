@@ -29,6 +29,24 @@ public sealed class InMemoryExecutionRecordStore : IExecutionRecordStore
         }
     }
 
+    public Task<ExecutionRecord?> GetByResourceIdAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_lock)
+        {
+            return Task.FromResult(_records.Values.FirstOrDefault(x => string.Equals(x.ResourceId, resourceId, StringComparison.Ordinal)));
+        }
+    }
+
+    public Task<ExecutionRecord?> GetByClientOrderIdAsync(string clientOrderId, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_lock)
+        {
+            return Task.FromResult(_records.Values.FirstOrDefault(x => string.Equals(x.ClientOrderId, clientOrderId, StringComparison.Ordinal)));
+        }
+    }
+
     public Task<IReadOnlyList<ExecutionRecord>> ListRecentAsync(int limit = 100, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

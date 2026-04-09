@@ -45,7 +45,7 @@ public sealed class ExecutionUpdateAppliedHandler
         await _executionReliabilityPolicy.ExecuteAsync(
             envelope,
             deadLetterQueue: "kalshi.integration.executor.dlq",
-            async token =>
+            async (_attemptCount, token) =>
             {
                 try
                 {
@@ -59,9 +59,16 @@ public sealed class ExecutionUpdateAppliedHandler
                             snapshot.ClientOrderId,
                             envelope.ResourceId,
                             envelope.CorrelationId,
+                            envelope.Id.ToString(),
+                            envelope.Attributes.TryGetValue("actionType", out var actionType) ? actionType : null,
+                            envelope.Attributes.TryGetValue("tradeIntentId", out var tradeIntentId) ? tradeIntentId : null,
+                            envelope.Attributes.TryGetValue("publisherOrderId", out var publisherOrderId) ? publisherOrderId : envelope.ResourceId,
                             snapshot.Ticker,
                             snapshot.Side,
                             snapshot.Action,
+                            envelope.Attributes.TryGetValue("targetPublisherOrderId", out var targetPublisherOrderId) ? targetPublisherOrderId : null,
+                            envelope.Attributes.TryGetValue("targetClientOrderId", out var targetClientOrderId) ? targetClientOrderId : null,
+                            envelope.Attributes.TryGetValue("targetExternalOrderId", out var targetExternalOrderId) ? targetExternalOrderId : null,
                             snapshot.Status,
                             existingRecord?.Quantity,
                             existingRecord?.LimitPriceDollars,

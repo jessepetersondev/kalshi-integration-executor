@@ -26,7 +26,6 @@ public sealed class RabbitMqTopologyBootstrapper
         channel.ExchangeDeclare(_options.Exchange, _options.ExchangeType, durable: true, autoDelete: false, arguments: null);
 
         channel.QueueDeclare(_options.ExecutorDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null);
-        channel.QueueDeclare(_options.ExecutorResultsDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
         channel.QueueDeclare(
             _options.ExecutorQueue,
@@ -60,8 +59,39 @@ public sealed class RabbitMqTopologyBootstrapper
         }
 
         channel.QueueBind(_options.ExecutorQueue, _options.Exchange, _options.RoutingKeyBinding, arguments: null);
-        channel.QueueBind(_options.ExecutorResultsQueue, _options.Exchange, _options.ResultsRoutingKeyBinding, arguments: null);
 
-        ExecutorLogMessages.TopologyReady(logger, _options.Exchange, _options.ExecutorQueue, _options.ExecutorResultsQueue);
+        if (_options.EnableResultsObserverQueue)
+        {
+            channel.QueueDeclare(_options.ExecutorResultsDeadLetterQueue, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            channel.QueueDeclare(
+                _options.ExecutorResultsQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: new Dictionary<string, object>
+                {
+                    ["x-dead-letter-exchange"] = string.Empty,
+                    ["x-dead-letter-routing-key"] = _options.ExecutorResultsDeadLetterQueue,
+                });
+
+            channel.QueueBind(_options.ExecutorResultsQueue, _options.Exchange, _options.ResultsRoutingKeyBinding, arguments: null);
+            ExecutorLogMessages.TopologyReady(logger, _options.Exchange, _options.ExecutorQueue, _options.ExecutorResultsQueue);
+            return;
+        }
+
+        TryQueueUnbind(channel, _options.ExecutorResultsQueue, _options.Exchange, _options.ResultsRoutingKeyBinding);
+        ExecutorLogMessages.TopologyReady(logger, _options.Exchange, _options.ExecutorQueue, "disabled");
+    }
+
+    private static void TryQueueUnbind(RabbitMQ.Client.IModel channel, string queue, string exchange, string routingKey)
+    {
+        try
+        {
+            channel.QueueUnbind(queue, exchange, routingKey, arguments: null);
+        }
+        catch
+        {
+            // Ignore if the queue or binding is absent.
+        }
     }
 }

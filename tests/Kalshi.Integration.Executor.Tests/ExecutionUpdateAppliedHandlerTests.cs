@@ -119,8 +119,8 @@ public sealed class ExecutionUpdateAppliedHandlerTests
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new KalshiOrderResponse("ext-1", "client-1", "KXBTC", "yes", "buy", "accepted", "{}"));
 
-        public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("cancelled");
+        public Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KalshiOrderResponse(externalOrderId, externalOrderId, null, null, "cancel", "canceled", "{}"));
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
         {

@@ -72,8 +72,8 @@ public sealed class OrderCreatedHandlerRiskTests
             return Task.FromResult(new KalshiOrderResponse("ext-1", "client-1", request.MarketTicker, request.Side, request.Action, "accepted", "{}"));
         }
 
-        public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("cancelled");
+        public Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KalshiOrderResponse(externalOrderId, externalOrderId, null, null, "cancel", "canceled", "{}"));
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult("status");

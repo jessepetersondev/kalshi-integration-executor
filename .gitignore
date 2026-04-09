@@ -13,6 +13,13 @@ coverage.*
 *.key
 __pycache__/
 *.pyc
+packages/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
 
 # Local/untracked environment overrides
 .env

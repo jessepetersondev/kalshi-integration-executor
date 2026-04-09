@@ -29,9 +29,16 @@ INSERT INTO execution_records (
     client_order_id,
     resource_id,
     correlation_id,
+    command_event_id,
+    action_type,
+    trade_intent_id,
+    publisher_order_id,
     ticker,
     side,
     action,
+    target_publisher_order_id,
+    target_client_order_id,
+    target_external_order_id,
     status,
     quantity,
     limit_price_dollars,
@@ -44,9 +51,16 @@ VALUES (
     $client_order_id,
     $resource_id,
     $correlation_id,
+    $command_event_id,
+    $action_type,
+    $trade_intent_id,
+    $publisher_order_id,
     $ticker,
     $side,
     $action,
+    $target_publisher_order_id,
+    $target_client_order_id,
+    $target_external_order_id,
     $status,
     $quantity,
     $limit_price_dollars,
@@ -58,9 +72,16 @@ ON CONFLICT(external_order_id) DO UPDATE SET
     client_order_id = excluded.client_order_id,
     resource_id = excluded.resource_id,
     correlation_id = excluded.correlation_id,
+    command_event_id = excluded.command_event_id,
+    action_type = excluded.action_type,
+    trade_intent_id = excluded.trade_intent_id,
+    publisher_order_id = excluded.publisher_order_id,
     ticker = excluded.ticker,
     side = excluded.side,
     action = excluded.action,
+    target_publisher_order_id = excluded.target_publisher_order_id,
+    target_client_order_id = excluded.target_client_order_id,
+    target_external_order_id = excluded.target_external_order_id,
     status = excluded.status,
     quantity = COALESCE(excluded.quantity, execution_records.quantity),
     limit_price_dollars = COALESCE(excluded.limit_price_dollars, execution_records.limit_price_dollars),
@@ -71,9 +92,16 @@ ON CONFLICT(external_order_id) DO UPDATE SET
         command.Parameters.AddWithValue("$client_order_id", record.ClientOrderId);
         command.Parameters.AddWithValue("$resource_id", (object?)record.ResourceId ?? DBNull.Value);
         command.Parameters.AddWithValue("$correlation_id", (object?)record.CorrelationId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$command_event_id", (object?)record.CommandEventId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$action_type", (object?)record.ActionType ?? DBNull.Value);
+        command.Parameters.AddWithValue("$trade_intent_id", (object?)record.TradeIntentId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$publisher_order_id", (object?)record.PublisherOrderId ?? DBNull.Value);
         command.Parameters.AddWithValue("$ticker", (object?)record.Ticker ?? DBNull.Value);
         command.Parameters.AddWithValue("$side", (object?)record.Side ?? DBNull.Value);
         command.Parameters.AddWithValue("$action", (object?)record.Action ?? DBNull.Value);
+        command.Parameters.AddWithValue("$target_publisher_order_id", (object?)record.TargetPublisherOrderId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$target_client_order_id", (object?)record.TargetClientOrderId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$target_external_order_id", (object?)record.TargetExternalOrderId ?? DBNull.Value);
         command.Parameters.AddWithValue("$status", (object?)record.Status ?? DBNull.Value);
         command.Parameters.AddWithValue("$quantity", (object?)record.Quantity ?? DBNull.Value);
         command.Parameters.AddWithValue("$limit_price_dollars", (object?)record.LimitPriceDollars ?? DBNull.Value);
@@ -89,11 +117,53 @@ ON CONFLICT(external_order_id) DO UPDATE SET
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = @"
-SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
+SELECT external_order_id, client_order_id, resource_id, correlation_id, command_event_id, action_type, trade_intent_id, publisher_order_id, ticker, side, action, target_publisher_order_id, target_client_order_id, target_external_order_id, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
 FROM execution_records
 WHERE external_order_id = $external_order_id
 LIMIT 1;";
         command.Parameters.AddWithValue("$external_order_id", externalOrderId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return ReadRecord(reader);
+    }
+
+    public async Task<ExecutionRecord?> GetByResourceIdAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+SELECT external_order_id, client_order_id, resource_id, correlation_id, command_event_id, action_type, trade_intent_id, publisher_order_id, ticker, side, action, target_publisher_order_id, target_client_order_id, target_external_order_id, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
+FROM execution_records
+WHERE resource_id = $resource_id
+ORDER BY recorded_at_utc DESC
+LIMIT 1;";
+        command.Parameters.AddWithValue("$resource_id", resourceId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return ReadRecord(reader);
+    }
+
+    public async Task<ExecutionRecord?> GetByClientOrderIdAsync(string clientOrderId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+SELECT external_order_id, client_order_id, resource_id, correlation_id, command_event_id, action_type, trade_intent_id, publisher_order_id, ticker, side, action, target_publisher_order_id, target_client_order_id, target_external_order_id, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
+FROM execution_records
+WHERE client_order_id = $client_order_id
+ORDER BY recorded_at_utc DESC
+LIMIT 1;";
+        command.Parameters.AddWithValue("$client_order_id", clientOrderId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
         {
@@ -109,7 +179,7 @@ LIMIT 1;";
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = @"
-SELECT external_order_id, client_order_id, resource_id, correlation_id, ticker, side, action, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
+SELECT external_order_id, client_order_id, resource_id, correlation_id, command_event_id, action_type, trade_intent_id, publisher_order_id, ticker, side, action, target_publisher_order_id, target_client_order_id, target_external_order_id, status, quantity, limit_price_dollars, notional_dollars, raw_response, recorded_at_utc
 FROM execution_records
 ORDER BY recorded_at_utc DESC
 LIMIT $limit;";
@@ -135,11 +205,18 @@ LIMIT $limit;";
             reader.IsDBNull(5) ? null : reader.GetString(5),
             reader.IsDBNull(6) ? null : reader.GetString(6),
             reader.IsDBNull(7) ? null : reader.GetString(7),
-            reader.IsDBNull(8) ? null : reader.GetInt32(8),
-            reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-            reader.IsDBNull(10) ? null : reader.GetDecimal(10),
-            reader.GetString(11),
-            DateTimeOffset.Parse(reader.GetString(12), CultureInfo.InvariantCulture));
+            reader.IsDBNull(8) ? null : reader.GetString(8),
+            reader.IsDBNull(9) ? null : reader.GetString(9),
+            reader.IsDBNull(10) ? null : reader.GetString(10),
+            reader.IsDBNull(11) ? null : reader.GetString(11),
+            reader.IsDBNull(12) ? null : reader.GetString(12),
+            reader.IsDBNull(13) ? null : reader.GetString(13),
+            reader.IsDBNull(14) ? null : reader.GetString(14),
+            reader.IsDBNull(15) ? null : reader.GetInt32(15),
+            reader.IsDBNull(16) ? null : reader.GetDecimal(16),
+            reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+            reader.GetString(18),
+            DateTimeOffset.Parse(reader.GetString(19), CultureInfo.InvariantCulture));
     }
 
     private SqliteConnection CreateConnection() => new(_connectionString);
@@ -180,9 +257,16 @@ CREATE TABLE IF NOT EXISTS execution_records (
     client_order_id TEXT NOT NULL,
     resource_id TEXT NULL,
     correlation_id TEXT NULL,
+    command_event_id TEXT NULL,
+    action_type TEXT NULL,
+    trade_intent_id TEXT NULL,
+    publisher_order_id TEXT NULL,
     ticker TEXT NULL,
     side TEXT NULL,
     action TEXT NULL,
+    target_publisher_order_id TEXT NULL,
+    target_client_order_id TEXT NULL,
+    target_external_order_id TEXT NULL,
     status TEXT NULL,
     quantity INTEGER NULL,
     limit_price_dollars REAL NULL,
@@ -195,5 +279,12 @@ CREATE INDEX IF NOT EXISTS idx_execution_records_recorded_at_utc ON execution_re
         TryAddColumn(connection, "execution_records", "quantity", "INTEGER NULL");
         TryAddColumn(connection, "execution_records", "limit_price_dollars", "REAL NULL");
         TryAddColumn(connection, "execution_records", "notional_dollars", "REAL NULL");
+        TryAddColumn(connection, "execution_records", "command_event_id", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "action_type", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "trade_intent_id", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "publisher_order_id", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "target_publisher_order_id", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "target_client_order_id", "TEXT NULL");
+        TryAddColumn(connection, "execution_records", "target_external_order_id", "TEXT NULL");
     }
 }

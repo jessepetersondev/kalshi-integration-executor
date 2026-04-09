@@ -76,7 +76,7 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
             snapshot.RawBody);
     }
 
-    public async Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+    public async Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
     {
         var path = $"/trade-api/v2/portfolio/orders/{externalOrderId}";
         using var message = new HttpRequestMessage(HttpMethod.Delete, path);
@@ -84,7 +84,15 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
         using var response = await SendAsync(message, "orders.cancel", cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         response.EnsureSuccessStatusCode();
-        return body;
+        var snapshot = KalshiOrderResponseParser.Parse(body, externalOrderId);
+        return new KalshiOrderResponse(
+            snapshot.OrderId,
+            snapshot.ClientOrderId,
+            snapshot.Ticker,
+            snapshot.Side,
+            snapshot.Action,
+            snapshot.Status ?? "canceled",
+            snapshot.RawBody);
     }
 
     public async Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)

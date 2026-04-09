@@ -11,7 +11,7 @@ namespace Kalshi.Integration.Executor.Tests;
 public sealed class TradeIntentCreatedHandlerTests
 {
     [Fact]
-    public async Task HandleAsyncShouldPublishExecutedEventWhenMarketLookupSucceeds()
+    public async Task HandleAsyncShouldRecordTradeIntentAsConsumedWhenReceived()
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
@@ -23,15 +23,15 @@ public sealed class TradeIntentCreatedHandlerTests
 
         await handler.HandleAsync(CreateEnvelope());
 
-        var published = Assert.Single(publisher.PublishedEvents);
-        Assert.Equal("trade-intent.executed", published.Name);
-        Assert.Equal("corr-1", published.CorrelationId);
-        Assert.Contains("KXBTC", published.Attributes["market"], StringComparison.Ordinal);
+        Assert.Empty(publisher.PublishedEvents);
+        var record = Assert.Single(store.Records);
+        Assert.Equal("trade-intent.created", record.EventName);
+        Assert.Equal("trade-intent-1", record.ResourceId);
         Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
     [Fact]
-    public async Task HandleAsyncShouldPublishFailedEventWhenMarketLookupFails()
+    public async Task HandleAsyncShouldNotEmitFailureEventWhenAuditOnlyProcessingSeesLookupError()
     {
         var publisher = new InMemoryResultEventPublisher();
         var store = new InMemoryConsumedEventStore();
@@ -43,9 +43,9 @@ public sealed class TradeIntentCreatedHandlerTests
 
         await handler.HandleAsync(CreateEnvelope());
 
-        var published = Assert.Single(publisher.PublishedEvents);
-        Assert.Equal("trade-intent.failed", published.Name);
-        Assert.Equal("InvalidOperationException", published.Attributes["errorType"]);
+        Assert.Empty(publisher.PublishedEvents);
+        Assert.Single(store.Records);
+        Assert.Empty(deadLetterPublisher.PublishedEvents);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class TradeIntentCreatedHandlerTests
         await handler.HandleAsync(envelope);
         await handler.HandleAsync(envelope);
 
-        Assert.Single(publisher.PublishedEvents);
+        Assert.Empty(publisher.PublishedEvents);
         Assert.Single(store.Records);
     }
 
@@ -111,8 +111,8 @@ public sealed class TradeIntentCreatedHandlerTests
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new KalshiOrderResponse("ext-1", "client-1", "KXBTC", "yes", "buy", "accepted", "{}"));
 
-        public Task<string> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
-            => Task.FromResult("cancelled");
+        public Task<KalshiOrderResponse> CancelOrderAsync(string externalOrderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new KalshiOrderResponse(externalOrderId, externalOrderId, null, null, "cancel", "canceled", "{}"));
 
         public Task<string> GetOrderStatusAsync(string externalOrderId, CancellationToken cancellationToken = default)
         {

@@ -26,6 +26,8 @@ public sealed class ExecutionRiskGuard : IExecutionRiskGuard
 
     public async Task<ExecutionRiskDecision> EvaluateAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
     {
+        var isNonOpeningAction = request.Action.Equals("cancel", StringComparison.OrdinalIgnoreCase) || request.ReduceOnly;
+
         if (!_options.LiveExecutionEnabled)
         {
             return ExecutionRiskDecision.Block("live_execution_disabled", "Live execution is disabled.");
@@ -52,23 +54,23 @@ public sealed class ExecutionRiskGuard : IExecutionRiskGuard
             }
         }
 
-        if (_options.MaxOrderQuantity > 0 && request.Quantity > _options.MaxOrderQuantity)
+        if (!isNonOpeningAction && _options.MaxOrderQuantity > 0 && request.Quantity > _options.MaxOrderQuantity)
         {
             return ExecutionRiskDecision.Block("max_order_quantity_exceeded", $"Order quantity {request.Quantity} exceeds max {_options.MaxOrderQuantity}.");
         }
 
-        if (_options.MaxLimitPriceDollars > 0m && request.LimitPrice > _options.MaxLimitPriceDollars)
+        if (!isNonOpeningAction && _options.MaxLimitPriceDollars > 0m && request.LimitPrice > _options.MaxLimitPriceDollars)
         {
             return ExecutionRiskDecision.Block("max_limit_price_exceeded", $"Limit price {request.LimitPrice} exceeds max {_options.MaxLimitPriceDollars}.");
         }
 
         var orderNotional = request.LimitPrice * request.Quantity;
-        if (_options.MaxOrderNotionalDollars > 0m && orderNotional > _options.MaxOrderNotionalDollars)
+        if (!isNonOpeningAction && _options.MaxOrderNotionalDollars > 0m && orderNotional > _options.MaxOrderNotionalDollars)
         {
             return ExecutionRiskDecision.Block("max_order_notional_exceeded", $"Order notional {orderNotional} exceeds max {_options.MaxOrderNotionalDollars}.");
         }
 
-        if (_options.MaxDailyNotionalDollars > 0m)
+        if (!isNonOpeningAction && _options.MaxDailyNotionalDollars > 0m)
         {
             var recent = await _executionRecordStore.ListRecentAsync(1000, cancellationToken);
             var todayUtc = DateTimeOffset.UtcNow.Date;

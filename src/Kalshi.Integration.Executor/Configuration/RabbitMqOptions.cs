@@ -33,6 +33,8 @@ public sealed class RabbitMqOptions
     [Required]
     public string ExecutorQueue { get; set; } = "kalshi.integration.executor";
 
+    public bool EnableResultsObserverQueue { get; set; }
+
     [Required]
     public string ExecutorResultsQueue { get; set; } = "kalshi.integration.executor.results";
 
