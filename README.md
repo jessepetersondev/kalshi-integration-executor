@@ -41,7 +41,6 @@ At startup it:
   - `kalshi.integration.#`
   - `kalshi.integration.results.#`
 
-This is infrastructure bootstrap only for now — message consumption and routing handlers come in later stories.
 
 ## Retry and dead-letter behavior
 
@@ -131,7 +130,7 @@ docker compose config
 
 ## Azure DevOps CI
 
-The repo now includes an Azure DevOps validation pipeline at `azure-pipelines.yml`.
+The repo includes an Azure DevOps validation pipeline at `azure-pipelines.yml`.
 
 The pipeline is intended to be used as required build validation for PRs targeting `main` and `master`.
 
