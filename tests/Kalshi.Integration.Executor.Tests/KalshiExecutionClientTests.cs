@@ -35,7 +35,15 @@ public sealed class KalshiExecutionClientTests
             }),
             NullLogger<KalshiExecutionClient>.Instance);
 
-        var response = await client.PlaceOrderAsync(new KalshiOrderRequest("KXBTC", "yes", 2, 0.42m, "client-123"));
+        var response = await client.PlaceOrderAsync(new KalshiOrderRequest(
+            "KXBTC",
+            "yes",
+            2,
+            0.42m,
+            "client-123",
+            TimeInForce: "good_till_canceled",
+            PostOnly: true,
+            CancelOrderOnPause: false));
 
         Assert.Equal("Accepted", response.Status);
         Assert.NotNull(handler.LastRequest);
@@ -48,6 +56,9 @@ public sealed class KalshiExecutionClientTests
         Assert.Equal("KXBTC", json.RootElement.GetProperty("ticker").GetString());
         Assert.Equal("client-123", json.RootElement.GetProperty("client_order_id").GetString());
         Assert.Equal("buy", json.RootElement.GetProperty("action").GetString());
+        Assert.Equal("good_till_canceled", json.RootElement.GetProperty("time_in_force").GetString());
+        Assert.True(json.RootElement.GetProperty("post_only").GetBoolean());
+        Assert.False(json.RootElement.GetProperty("cancel_order_on_pause").GetBoolean());
     }
 
     [Fact]

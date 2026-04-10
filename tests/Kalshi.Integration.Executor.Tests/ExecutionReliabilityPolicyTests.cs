@@ -76,6 +76,40 @@ public sealed class ExecutionReliabilityPolicyTests
         Assert.Equal(2, persisted.AttemptCount);
     }
 
+    [Fact]
+    public async Task ExecuteAsyncShouldInvokeTerminalFailureCallbackBeforeDeadLettering()
+    {
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
+        var policy = new ExecutionReliabilityPolicy(
+            Options.Create(new FailureHandlingOptions
+            {
+                MaxRetryAttempts = 1,
+                BaseDelayMilliseconds = 1,
+            }),
+            deadLetterPublisher,
+            deadLetterStore);
+
+        Exception? callbackException = null;
+        var callbackAttemptCount = 0;
+
+        await policy.ExecuteAsync(
+            CreateEnvelope(),
+            "kalshi.integration.executor.dlq",
+            (_, _) => throw new HttpRequestException("still transient"),
+            (exception, attemptCount, _) =>
+            {
+                callbackException = exception;
+                callbackAttemptCount = attemptCount;
+                return Task.CompletedTask;
+            });
+
+        Assert.NotNull(callbackException);
+        Assert.IsType<HttpRequestException>(callbackException);
+        Assert.Equal(2, callbackAttemptCount);
+        Assert.Single(deadLetterPublisher.PublishedEvents);
+    }
+
     private static ApplicationEventEnvelope CreateEnvelope()
     {
         return new ApplicationEventEnvelope(

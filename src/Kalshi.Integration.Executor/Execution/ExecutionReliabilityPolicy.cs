@@ -41,6 +41,26 @@ public sealed class ExecutionReliabilityPolicy
         Func<int, CancellationToken, Task> operation,
         CancellationToken cancellationToken = default)
     {
+        await ExecuteAsyncCore(envelope, deadLetterQueue, operation, onDeadLetterAsync: null, cancellationToken);
+    }
+
+    public Task ExecuteAsync(
+        ApplicationEventEnvelope envelope,
+        string deadLetterQueue,
+        Func<int, CancellationToken, Task> operation,
+        Func<Exception, int, CancellationToken, Task> onDeadLetterAsync,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsyncCore(envelope, deadLetterQueue, operation, onDeadLetterAsync, cancellationToken);
+    }
+
+    private async Task ExecuteAsyncCore(
+        ApplicationEventEnvelope envelope,
+        string deadLetterQueue,
+        Func<int, CancellationToken, Task> operation,
+        Func<Exception, int, CancellationToken, Task>? onDeadLetterAsync,
+        CancellationToken cancellationToken)
+    {
         Exception? lastException = null;
         var attemptCount = 0;
 
@@ -69,6 +89,19 @@ public sealed class ExecutionReliabilityPolicy
             {
                 lastException = exception;
                 break;
+            }
+        }
+
+        if (lastException is not null && onDeadLetterAsync is not null)
+        {
+            try
+            {
+                await onDeadLetterAsync(lastException, attemptCount, cancellationToken);
+            }
+            catch
+            {
+                // Preserve the original dead-letter path even if the terminal failure
+                // notification cannot be published.
             }
         }
 

@@ -65,13 +65,15 @@ public sealed class ExecutorEndToEndResilienceTests
             var failingHarness = CreateHarness(databasePath, new StubKalshiExecutionClient(httpException: new HttpRequestException("simulated transient outage")));
             await failingHarness.DispatchAsync(payload);
 
-            Assert.Empty(failingHarness.ResultPublisher.PublishedEvents);
+            var failureEvent = Assert.Single(failingHarness.ResultPublisher.PublishedEvents);
+            Assert.Equal("order.execution_failed", failureEvent.Name);
             var deadLetterEvent = Assert.Single(failingHarness.DeadLetterPublisher.PublishedEvents);
             Assert.Equal("order.created.dead_lettered", deadLetterEvent.Name);
 
             var deadLetterRecord = Assert.Single(await failingHarness.DeadLetterRecordStore.ListRecentAsync());
             Assert.Equal("order.created", deadLetterRecord.SourceEventName);
             Assert.Equal(2, deadLetterRecord.AttemptCount);
+            Assert.Empty(await failingHarness.ConsumedEventStore.ListRecentAsync());
 
             var inboundReplayPublisher = new InMemoryInboundEventPublisher();
             var replayService = new DeadLetterReplayService(failingHarness.DeadLetterRecordStore, inboundReplayPublisher);

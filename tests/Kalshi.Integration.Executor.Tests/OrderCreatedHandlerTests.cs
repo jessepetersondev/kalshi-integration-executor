@@ -35,6 +35,10 @@ public sealed class OrderCreatedHandlerTests
         Assert.Equal("idem-1", published.IdempotencyKey);
         Assert.Equal("ext-123", published.Attributes["externalOrderId"]);
         Assert.Equal("client-123", published.Attributes["clientOrderId"]);
+        Assert.NotNull(client.LastRequest);
+        Assert.Equal("good_till_canceled", client.LastRequest!.TimeInForce);
+        Assert.True(client.LastRequest.PostOnly);
+        Assert.True(client.LastRequest.CancelOrderOnPause);
         var record = await executionStore.GetByExternalOrderIdAsync("ext-123");
         Assert.NotNull(record);
         Assert.Equal("accepted", record!.Status);
@@ -92,6 +96,40 @@ public sealed class OrderCreatedHandlerTests
         Assert.Single(records);
     }
 
+    [Fact]
+    public async Task HandleAsyncShouldPublishFailureEventAndDeadLetterAfterRetryableFailureExhaustion()
+    {
+        var publisher = new InMemoryResultEventPublisher();
+        var consumedStore = new InMemoryConsumedEventStore();
+        var executionStore = new InMemoryExecutionRecordStore();
+        var deadLetterStore = new InMemoryDeadLetterRecordStore();
+        var deadLetterPublisher = new RecordingDeadLetterPublisher();
+        var riskGuard = new ExecutionRiskGuard(Options.Create(new RiskControlsOptions { LiveExecutionEnabled = true }), executionStore);
+        var policy = new ExecutionReliabilityPolicy(
+            Options.Create(new FailureHandlingOptions
+            {
+                MaxRetryAttempts = 1,
+                BaseDelayMilliseconds = 1,
+            }),
+            deadLetterPublisher,
+            deadLetterStore);
+        var client = new StubKalshiExecutionClient(null, new HttpRequestException("transient"));
+        var handler = new OrderCreatedHandler(client, publisher, consumedStore, executionStore, riskGuard, policy);
+
+        await handler.HandleAsync(CreateEnvelope());
+
+        var published = Assert.Single(publisher.PublishedEvents);
+        Assert.Equal("order.execution_failed", published.Name);
+        Assert.Equal("HttpRequestException", published.Attributes["errorType"]);
+        Assert.Equal("transient", published.Attributes["errorMessage"]);
+        Assert.Equal("2", published.Attributes["attemptCount"]);
+
+        var deadLetter = Assert.Single(deadLetterPublisher.PublishedEvents);
+        Assert.Equal("order.created.dead_lettered", deadLetter.Name);
+        Assert.Empty(consumedStore.Records);
+        Assert.Single(await deadLetterStore.ListRecentAsync());
+    }
+
     private static ApplicationEventEnvelope CreateEnvelope()
     {
         return new ApplicationEventEnvelope(
@@ -107,6 +145,9 @@ public sealed class OrderCreatedHandlerTests
                 ["side"] = "yes",
                 ["quantity"] = "2",
                 ["limitPrice"] = "0.42",
+                ["timeInForce"] = "good_till_canceled",
+                ["postOnly"] = "true",
+                ["cancelOrderOnPause"] = "true",
             },
             DateTimeOffset.UtcNow);
     }
@@ -133,8 +174,11 @@ public sealed class OrderCreatedHandlerTests
             _exception = exception;
         }
 
+        public KalshiOrderRequest? LastRequest { get; private set; }
+
         public Task<KalshiOrderResponse> PlaceOrderAsync(KalshiOrderRequest request, CancellationToken cancellationToken = default)
         {
+            LastRequest = request;
             if (_exception is not null)
             {
                 throw _exception;

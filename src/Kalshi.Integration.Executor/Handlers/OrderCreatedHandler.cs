@@ -54,7 +54,10 @@ public sealed class OrderCreatedHandler
             ActionType: actionType,
             TargetPublisherOrderId: GetAttribute(envelope, "targetPublisherOrderId"),
             TargetClientOrderId: GetAttribute(envelope, "targetClientOrderId"),
-            TargetExternalOrderId: GetAttribute(envelope, "targetExternalOrderId"));
+            TargetExternalOrderId: GetAttribute(envelope, "targetExternalOrderId"),
+            TimeInForce: ResolveTimeInForce(envelope, actionType),
+            PostOnly: ResolvePostOnly(envelope, actionType),
+            CancelOrderOnPause: TryGetBool(envelope, "cancelOrderOnPause"));
 
         var riskDecision = await _executionRiskGuard.EvaluateAsync(request, cancellationToken);
         if (!riskDecision.IsAllowed)
@@ -150,30 +153,12 @@ public sealed class OrderCreatedHandler
                 }
                 catch (Exception exception)
                 {
-                    var failureEvent = new ApplicationEventEnvelope(
-                        Guid.NewGuid(),
-                        "executor",
-                        "order.execution_failed",
-                        envelope.ResourceId,
-                        envelope.CorrelationId,
-                        envelope.IdempotencyKey,
-                        BuildResultAttributes(
-                            envelope,
-                            actionType,
-                            attemptCount,
-                            normalizedStatus: "execution_failed",
-                            additionalAttributes: new Dictionary<string, string?>
-                            {
-                                ["errorType"] = exception.GetType().Name,
-                                ["errorMessage"] = exception.Message,
-                            }),
-                        DateTimeOffset.UtcNow);
-
-                    await _resultEventPublisher.PublishAsync(failureEvent, token);
+                    await PublishFailureEventAsync(envelope, actionType, attemptCount, exception, token);
                     await _consumedEventStore.RecordProcessedAsync(eventKey, envelope.Name, envelope.ResourceId, token);
                 }
             },
-            cancellationToken);
+            onDeadLetterAsync: (exception, attemptCount, token) => PublishFailureEventAsync(envelope, actionType, attemptCount, exception, token),
+            cancellationToken: cancellationToken);
     }
 
     private async Task<string> ResolveCancelTargetExternalOrderIdAsync(KalshiOrderRequest request, CancellationToken cancellationToken)
@@ -237,6 +222,35 @@ public sealed class OrderCreatedHandler
         return attributes;
     }
 
+    private Task PublishFailureEventAsync(
+        ApplicationEventEnvelope envelope,
+        string actionType,
+        int attemptCount,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        var failureEvent = new ApplicationEventEnvelope(
+            Guid.NewGuid(),
+            "executor",
+            "order.execution_failed",
+            envelope.ResourceId,
+            envelope.CorrelationId,
+            envelope.IdempotencyKey,
+            BuildResultAttributes(
+                envelope,
+                actionType,
+                attemptCount,
+                normalizedStatus: "execution_failed",
+                additionalAttributes: new Dictionary<string, string?>
+                {
+                    ["errorType"] = exception.GetType().Name,
+                    ["errorMessage"] = exception.Message,
+                }),
+            DateTimeOffset.UtcNow);
+
+        return _resultEventPublisher.PublishAsync(failureEvent, cancellationToken);
+    }
+
     private static string? GetAttribute(ApplicationEventEnvelope envelope, string key)
         => envelope.Attributes.TryGetValue(key, out var value) ? value : null;
 
@@ -245,4 +259,39 @@ public sealed class OrderCreatedHandler
 
     private static decimal? TryGetDecimal(ApplicationEventEnvelope envelope, string key)
         => envelope.Attributes.TryGetValue(key, out var value) && decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+
+    private static bool? TryGetBool(ApplicationEventEnvelope envelope, string key)
+        => envelope.Attributes.TryGetValue(key, out var value) && bool.TryParse(value, out var parsed) ? parsed : null;
+
+    private static string? ResolveTimeInForce(ApplicationEventEnvelope envelope, string actionType)
+    {
+        var fromEvent = GetAttribute(envelope, "timeInForce");
+        if (!string.IsNullOrWhiteSpace(fromEvent))
+        {
+            return fromEvent.Trim();
+        }
+
+        return actionType switch
+        {
+            "exit" => "immediate_or_cancel",
+            "entry" => "good_till_canceled",
+            _ => null,
+        };
+    }
+
+    private static bool? ResolvePostOnly(ApplicationEventEnvelope envelope, string actionType)
+    {
+        var fromEvent = TryGetBool(envelope, "postOnly");
+        if (fromEvent.HasValue)
+        {
+            return fromEvent.Value;
+        }
+
+        return actionType switch
+        {
+            "exit" => false,
+            "entry" => true,
+            _ => null,
+        };
+    }
 }

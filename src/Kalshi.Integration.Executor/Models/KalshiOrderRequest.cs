@@ -14,4 +14,7 @@ public sealed record KalshiOrderRequest(
     string? ActionType = null,
     string? TargetPublisherOrderId = null,
     string? TargetClientOrderId = null,
-    string? TargetExternalOrderId = null);
+    string? TargetExternalOrderId = null,
+    string? TimeInForce = null,
+    bool? PostOnly = null,
+    bool? CancelOrderOnPause = null);

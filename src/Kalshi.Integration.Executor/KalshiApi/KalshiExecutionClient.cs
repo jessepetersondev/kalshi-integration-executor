@@ -42,9 +42,9 @@ public sealed class KalshiExecutionClient : IKalshiExecutionClient
             Action = request.Action,
             Count = request.Quantity,
             Type = "limit",
-            TimeInForce = _options.TimeInForce,
-            PostOnly = _options.PostOnly,
-            CancelOrderOnPause = _options.CancelOrderOnPause,
+            TimeInForce = request.TimeInForce ?? _options.TimeInForce,
+            PostOnly = request.PostOnly ?? _options.PostOnly,
+            CancelOrderOnPause = request.CancelOrderOnPause ?? _options.CancelOrderOnPause,
             Subaccount = _options.Subaccount,
             ReduceOnly = request.ReduceOnly,
             YesPriceDollars = request.Side.Equals("yes", StringComparison.OrdinalIgnoreCase)
