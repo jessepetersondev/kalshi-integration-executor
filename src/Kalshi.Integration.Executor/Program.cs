@@ -1,14 +1,14 @@
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor;
 using Kalshi.Integration.Executor.Configuration;
+using Kalshi.Integration.Executor.Diagnostics;
 using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.Handlers;
-using Kalshi.Integration.Executor.Logging;
 using Kalshi.Integration.Executor.KalshiApi;
-using Kalshi.Integration.Executor.Persistence;
+using Kalshi.Integration.Executor.Logging;
 using Kalshi.Integration.Executor.Messaging;
+using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Routing;
-using Kalshi.Integration.Executor.Diagnostics;
+using Microsoft.Extensions.Options;
 
 // Wire the executor as a generic host so the same process can run either as
 // the long-lived RabbitMQ worker or as the DLQ diagnostics CLI.

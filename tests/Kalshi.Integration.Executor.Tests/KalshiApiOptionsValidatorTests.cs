@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Hosting;
 using Kalshi.Integration.Executor.KalshiApi;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;

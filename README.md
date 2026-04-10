@@ -122,7 +122,7 @@ The results queue messages are published with routing keys like:
 ### Validation commands
 ```bash
 cd /home/ai/clawd/projects/kalshi-integration-executor
-dotnet format KalshiIntegrationExecutor.sln --verify-no-changes
+dotnet format KalshiIntegrationExecutor.sln --verify-no-changes --severity error
 dotnet build KalshiIntegrationExecutor.sln -c Release /p:TreatWarningsAsErrors=true
 dotnet test KalshiIntegrationExecutor.sln -c Release --no-build
 docker compose config
@@ -136,7 +136,7 @@ The pipeline is intended to be used as required build validation for PRs targeti
 
 The pipeline currently:
 - restores the .NET solution with NuGet vulnerability auditing enabled
-- verifies formatting with `dotnet format --verify-no-changes`
+- verifies formatting with `dotnet format --verify-no-changes --severity error`
 - builds the solution with analyzers and code-style warnings enforced as errors
 - runs .NET tests and publishes TRX test results
 

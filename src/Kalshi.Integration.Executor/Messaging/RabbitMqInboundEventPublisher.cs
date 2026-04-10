@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace Kalshi.Integration.Executor.Messaging;

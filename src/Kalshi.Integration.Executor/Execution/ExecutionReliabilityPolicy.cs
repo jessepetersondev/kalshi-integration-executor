@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Execution;
 

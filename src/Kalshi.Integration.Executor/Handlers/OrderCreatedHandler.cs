@@ -1,8 +1,8 @@
+using System.Globalization;
 using Kalshi.Integration.Executor.Execution;
 using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
-using System.Globalization;
 
 namespace Kalshi.Integration.Executor.Handlers;
 

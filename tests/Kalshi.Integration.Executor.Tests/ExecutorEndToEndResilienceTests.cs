@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.Extensions.Options;
 using Kalshi.Integration.Executor.Configuration;
 using Kalshi.Integration.Executor.Diagnostics;
 using Kalshi.Integration.Executor.Execution;
@@ -8,6 +7,7 @@ using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
 using Kalshi.Integration.Executor.Routing;
+using Microsoft.Extensions.Options;
 
 namespace Kalshi.Integration.Executor.Tests;
 

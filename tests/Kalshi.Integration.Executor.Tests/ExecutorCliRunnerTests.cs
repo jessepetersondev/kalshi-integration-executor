@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using Kalshi.Integration.Executor.Diagnostics;
 using Kalshi.Integration.Executor.Messaging;
 using Kalshi.Integration.Executor.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Kalshi.Integration.Executor.Tests;
 

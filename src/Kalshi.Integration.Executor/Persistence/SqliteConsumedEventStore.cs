@@ -1,6 +1,6 @@
+using Kalshi.Integration.Executor.Configuration;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
-using Kalshi.Integration.Executor.Configuration;
 
 namespace Kalshi.Integration.Executor.Persistence;
 

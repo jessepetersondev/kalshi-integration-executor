@@ -1,5 +1,5 @@
-using Kalshi.Integration.Executor.KalshiApi;
 using Kalshi.Integration.Executor.Execution;
+using Kalshi.Integration.Executor.KalshiApi;
 
 namespace Kalshi.Integration.Executor.Execution;
 

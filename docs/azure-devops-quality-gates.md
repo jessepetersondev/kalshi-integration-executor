@@ -14,7 +14,7 @@ PR runs use `autoCancel: true` so superseded validations are canceled when a new
 The validation job enforces these gates in order:
 
 1. `dotnet restore` with NuGet auditing enabled by the Azure pipeline
-2. `dotnet format KalshiIntegrationExecutor.sln --verify-no-changes`
+2. `dotnet format KalshiIntegrationExecutor.sln --verify-no-changes --severity error`
 3. `dotnet build` in `Release` with analyzers and code-style warnings treated as errors
 4. `dotnet test` for the full .NET solution with TRX publishing
 
